@@ -90,6 +90,23 @@ h2{font-size:21px;font-weight:650;letter-spacing:-.01em}
 .delta{font-family:var(--font-num);font-weight:700;font-variant-numeric:tabular-nums}
 .delta.up{color:var(--good)} .delta.down{color:var(--bad)} .delta.zero{color:var(--ink-3)}
 .hero-sub{color:var(--ink-2);font-size:14px}
+.goal{margin-top:auto;padding-top:14px;display:grid;gap:7px}
+.goal-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.goal-n{font-weight:600;font-size:15px}
+.goal-n b{font-family:var(--font-num)}
+.goal-sub{font-size:14px;color:var(--ink-2)}
+.goal-sub b{font-family:var(--font-num);color:var(--ink)}
+.flash{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;background:var(--gold-soft);border:1px solid var(--gold-fill);border-radius:14px;padding:16px 20px}
+.flash .lab{color:var(--gold)}
+.flash-t{font-size:22px;font-weight:700;letter-spacing:-.01em;margin-top:2px}
+.flash-p{margin:4px 0 0;color:var(--ink-2);font-size:15px}
+.goals{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-width:640px}
+.goals li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:baseline;padding:10px 14px;border:1px solid var(--rule);border-radius:10px;background:var(--surface)}
+.goals li.now{border-color:var(--gold-fill);box-shadow:inset 0 0 0 1px var(--gold-soft)}
+.goals .gn{font-weight:600}
+.goals .gr{font-family:var(--font-num);font-weight:700}
+.goals .gs{grid-column:1/-1;font-size:13px;color:var(--ink-3)}
+.goals li.done .gs{color:var(--good)}
 .next{margin-top:auto;padding-top:10px;font-size:15px}
 .next b{font-family:var(--font-num)}
 .chart{position:relative;min-height:170px}
@@ -687,7 +704,7 @@ MM.addTopic({
   // ---------- storage ----------
   var storageOK = true;
   function fresh() {
-    return { v: 1, rating: null, peak: null, n: 0, hist: [], att: {}, rev: {}, time: {}, days: {}, daily: {}, weekly: {}, diag: null, diagRun: null, teacher: {}, drafts: {}, read: {} };
+    return { v: 1, rating: null, peak: null, n: 0, hist: [], att: {}, rev: {}, time: {}, days: {}, daily: {}, weekly: {}, diag: null, diagRun: null, teacher: {}, drafts: {}, read: {}, goals: { from: {}, done: {} }, flash: null, notice: null };
   }
   function load() {
     try {
@@ -730,8 +747,23 @@ MM.addTopic({
     S.peak = Math.max(S.peak || 0, S.rating);
     S.hist.push([Date.now(), S.rating]);
     if (S.hist.length > 500) S.hist.splice(0, S.hist.length - 500);
+    checkGoals();
     return d;
   }
+  // Goals: the next stage above the rating is the current goal; reaching it is celebrated once.
+  function checkGoals() {
+    if (S.rating == null) return;
+    STAGES.forEach(function (s) {
+      if (S.rating >= s.r && !S.goals.done[s.r] && S.goals.from[s.r] != null) { S.goals.done[s.r] = Date.now(); S.flash = s.r; }
+    });
+  }
+  function currentGoal() {
+    if (S.rating == null) return null;
+    var g = stageNext(S.rating); if (!g) return null;
+    if (S.goals.from[g.r] == null) { S.goals.from[g.r] = S.rating; save(); }
+    return { s: g, from: Math.min(S.goals.from[g.r], S.rating) };
+  }
+  function stageBy(r) { for (var i = 0; i < STAGES.length; i++) if (STAGES[i].r === Number(r)) return STAGES[i]; return null; }
   function stageNext(r) { for (var i = 0; i < STAGES.length; i++) if (STAGES[i].r > r) return STAGES[i]; return null; }
   function delta7() {
     if (!S.hist.length) return 0;
@@ -993,10 +1025,25 @@ MM.addTopic({
     var t = T[MM.topics[0].id], ns = nextStep(t);
     var ws = weekSec(), st = streak();
 
-    var hero = '<section class="hero"><div class="hero-main"><div class="lab">Рейтинг</div>' +
+    var goal = currentGoal();
+    var goalHtml = goal
+      ? '<div class="goal"><div class="goal-h"><span class="lab">Цель</span><span class="goal-n">' + goal.s.name + ' · <b>' + goal.s.r + '</b></span></div>' +
+        '<div class="bar goldbar" role="img" aria-label="Прогресс к цели: ' + (r - goal.from) + ' из ' + (goal.s.r - goal.from) + '"><i style="width:' + Math.max(2, Math.round((r - goal.from) / (goal.s.r - goal.from) * 100)) + '%"></i></div>' +
+        '<div class="goal-sub">осталось <b>' + (goal.s.r - r) + '</b> · старт цели ' + goal.from + '</div></div>'
+      : '<div class="next">Ты выше всей шкалы. Пора на международные олимпиады.</div>';
+    var banners = '';
+    if (S.notice === 'start') {
+      banners += '<section class="flash"><div><div class="lab">Результат перенесён</div><div class="flash-t">Стартовый рейтинг ' + S.diag.perf + '</div><p class="flash-p">Первая цель — ' + (goal ? '«' + goal.s.name + '», ' + goal.s.r : 'следующий этап') + '. Каждая решённая задача двигает к ней.</p></div><button class="btn small" type="button" data-act="notice-ok">Понятно</button></section>';
+    }
+    if (S.flash && stageBy(S.flash)) {
+      var fs = stageBy(S.flash);
+      banners += '<section class="flash"><div><div class="lab">Цель достигнута</div><div class="flash-t">' + fs.name + ' · ' + fs.r + '</div><p class="flash-p">' + (goal ? 'Следующая цель — «' + goal.s.name + '», ' + goal.s.r + '.' : 'Ты прошёл всю шкалу.') + '</p></div><button class="btn small" type="button" data-act="flash-ok">Дальше</button></section>';
+    }
+
+    var hero = banners + '<section class="hero"><div class="hero-main"><div class="lab">Рейтинг</div>' +
       '<div class="rating-big">' + r + '</div>' +
       '<div class="hero-sub"><span class="delta ' + deltaCls(d7) + '">' + sign(d7) + '</span> за 7 дней · пик ' + S.peak + ' · ' + S.n + ' ' + plural(S.n, 'задача', 'задачи', 'задач') + ' в рейтинге</div>' +
-      '<div class="next">' + (nx ? 'До уровня «' + nx.name + '» осталось <b>' + (nx.r - r) + '</b>' : 'Ты выше всей шкалы. Пора на международные олимпиады.') + '</div></div>' +
+      goalHtml + '</div>' +
       '<div class="chart" data-chart="small"></div></section>';
 
     var cards = '<section class="grid4">' +
@@ -1081,6 +1128,7 @@ MM.addTopic({
     return '<section class="hints" aria-label="Подсказки">' + shown + more + '</section>';
   }
   function deltaChip(d) { return d == null ? '' : '<span class="delta ' + deltaCls(d) + '">' + sign(d) + '</span>'; }
+  function goalPill() { var s = S.flash && stageBy(S.flash); return s ? '<a class="pill gold" href="#today">Цель «' + s.name + '» достигнута</a>' : ''; }
   function vProblem(id) {
     var p = P[id]; if (!p) return notFound();
     if (!cur || cur.id !== id) cur = newCur(id);
@@ -1114,13 +1162,13 @@ MM.addTopic({
     if (cur.result && p.type !== 'proof') {
       var r = cur.result;
       if (r.gaveUp) h += '<div class="fb no" id="after" tabindex="-1"><span class="fb-t">Решение открыто</span>' + deltaChip(r.d) + '<span class="fb-sub">Задача вернётся на повторение завтра.</span></div>';
-      else if (r.ok) h += '<div class="fb ok" id="after" tabindex="-1"><span class="fb-t">Верно</span>' + deltaChip(r.d) + '<span class="fb-sub">' + (r.sec ? 'за ' + Math.floor(r.sec / 60) + ':' + pad(r.sec % 60) : '') + (r.d == null ? ' · без изменения рейтинга' : '') + '</span></div>';
+      else if (r.ok) h += '<div class="fb ok" id="after" tabindex="-1"><span class="fb-t">Верно</span>' + deltaChip(r.d) + '<span class="fb-sub">' + (r.sec ? 'за ' + Math.floor(r.sec / 60) + ':' + pad(r.sec % 60) : '') + (r.d == null ? ' · без изменения рейтинга' : '') + '</span>' + goalPill() + '</div>';
       else h += '<div class="fb no" id="after" tabindex="-1"><span class="fb-t">Неверно</span>' + deltaChip(r.d) + '<span class="fb-sub">Подумай ещё раз или открой подсказку.</span>' +
         (cur.phase === 'wrong' && p.type === 'choice' ? '<button class="btn ghost small" type="button" data-act="retry">Ещё раз</button>' : '') + '</div>';
     }
     if (cur.result && p.type === 'proof' && cur.phase === 'graded') {
       var g = cur.result;
-      h += '<div class="fb ' + (g.pts >= 4 ? 'ok' : 'no') + '" id="after" tabindex="-1"><span class="fb-t">' + g.pts + ' из 7</span>' + deltaChip(g.d) + '<span class="fb-sub">' + (g.pts === 7 ? 'Полное решение.' : g.pts >= 4 ? 'Хорошо, но не до конца. Задача вернётся на повторение.' : 'Задача вернётся на повторение через 3 дня. Разбери решение ещё раз.') + '</span></div>';
+      h += '<div class="fb ' + (g.pts >= 4 ? 'ok' : 'no') + '" id="after" tabindex="-1"><span class="fb-t">' + g.pts + ' из 7</span>' + deltaChip(g.d) + '<span class="fb-sub">' + (g.pts === 7 ? 'Полное решение.' : g.pts >= 4 ? 'Хорошо, но не до конца. Задача вернётся на повторение.' : 'Задача вернётся на повторение через 3 дня. Разбери решение ещё раз.') + '</span>' + goalPill() + '</div>';
     }
 
     if (p.type !== 'proof' || cur.phase === 'solve') h += hintsBlock(p, ratedPending);
@@ -1194,7 +1242,14 @@ MM.addTopic({
     return h;
   }
   function diagResult() {
-    var d = S.diag, rows = Object.keys(SEC).filter(function (k) { return d.bySec[k]; }).map(function (k) {
+    var d = S.diag;
+    if (d.imported) {
+      return '<div><nav class="crumbs"><a href="#today">Сегодня</a> / Диагностика</nav><h1 class="pg" style="margin-top:6px">Результат диагностики</h1><p class="pg-sub">' + fmtShort(d.ts) + '</p></div>' +
+        '<section class="panel" style="max-width:720px"><div class="lab">Стартовый рейтинг</div><div class="rating-big" style="font-size:64px;margin:6px 0">' + d.perf + '</div>' +
+        '<p style="margin:0">Результат перенесён с устройства, на котором проходила диагностика. Разбор отдельных задач остался там.</p></section>' +
+        '<div class="actions"><a class="btn" href="#t-div">Перейти к теме</a><button class="btn ghost" type="button" data-act="diag-restart">Пройти заново</button></div>';
+    }
+    var rows = Object.keys(SEC).filter(function (k) { return d.bySec[k]; }).map(function (k) {
       var v = d.bySec[k];
       return '<div><div class="stat-row"><span>' + SEC[k] + '</span><b>' + v[0] + '/' + v[1] + '</b></div><div class="bar"><i style="width:' + (v[0] / v[1] * 100) + '%"></i></div></div>';
     }).join('');
@@ -1229,6 +1284,7 @@ MM.addTopic({
       '<div class="hero-sub">Пик ' + (S.peak || '—') + ' · ' + S.n + ' ' + plural(S.n, 'задача', 'задачи', 'задач') + ' в рейтинге</div></div><div class="chart" data-chart="big"></div></div></section>' +
       '<section class="tiles"><div class="tile"><span>Решено задач</span><b>' + solved + '/' + ALL.length + '</b></div><div class="tile"><span>С первой попытки</span><b>' + first + '%</b></div>' +
       '<div class="tile"><span>Эта неделя</span><b>' + mins(weekSec()) + '</b></div><div class="tile"><span>Дней подряд</span><b>' + streak() + '</b></div></section>' +
+      goalsSection() +
       '<section class="msec"><h2>Для учителя</h2><p class="small" style="margin:0">Задачи, которые ты отметил, вместе с твоими черновиками. Покажи их учителю математики.</p>' + tl + '</section>' +
       '<section class="msec"><h2>Диагностика</h2>' + (S.diag ? '<p style="margin:0">Стартовый рейтинг ' + S.diag.perf + ' (' + fmtShort(S.diag.ts) + '). <a href="#diag">Подробнее</a></p>' : '<p style="margin:0"><a href="#diag">Пройти диагностику</a></p>') + '</section>' +
       '<section class="msec"><h2>Перенос на другое устройство</h2><p class="small" style="margin:0">Прогресс хранится в этом браузере. Чтобы продолжить на телефоне или другом компьютере, скопируй код и вставь его там.</p>' +
@@ -1238,6 +1294,17 @@ MM.addTopic({
       '<div class="actions"><button class="btn ghost small" type="button" data-act="import">Загрузить прогресс</button><span class="small" id="impmsg" aria-live="polite"></span></div></section>' +
       '<section class="msec"><h2>Сброс</h2><div class="actions"><button class="btn ghost small" type="button" data-act="reset" id="resetbtn">Сбросить весь прогресс</button></div></section>' +
       '<p class="small">Всего времени на математику: ' + mins(total) + '.</p>';
+  }
+  function goalsSection() {
+    if (S.rating == null) return '';
+    var g = currentGoal();
+    var items = STAGES.map(function (s) {
+      var done = S.goals.done[s.r] || (S.rating >= s.r ? true : null);
+      var now = g && g.s.r === s.r;
+      var st = done ? (typeof done === 'number' ? 'достигнута ' + fmtShort(done) : 'пройдена до старта') : now ? 'текущая цель · осталось ' + (s.r - S.rating) : 'впереди';
+      return '<li class="' + (done ? 'done' : now ? 'now' : '') + '"><span class="gn">' + s.name + '</span><span class="gr">' + s.r + '</span><span class="gs">' + st + '</span></li>';
+    }).join('');
+    return '<section class="msec"><h2>Цели</h2><ul class="goals">' + items + '</ul></section>';
   }
   function notFound() { return '<div><h1 class="pg">Страница не найдена</h1><p class="pg-sub"><a href="#today">На главную</a></p></div>'; }
 
@@ -1408,6 +1475,8 @@ MM.addTopic({
     else if (act === 'giveup') giveUp(cur.id);
     else if (act === 'teacher') { S.teacher[cur.id] = !S.teacher[cur.id]; save(); render(); }
     else if (act === 'unflag') { delete S.teacher[b.getAttribute('data-id')]; save(); render(); }
+    else if (act === 'notice-ok') { S.notice = null; save(); render(); }
+    else if (act === 'flash-ok') { S.flash = null; save(); render(); }
     else if (act === 'mk') { var ta = document.getElementById(b.getAttribute('data-t')); if (ta) insertAt(ta, b.getAttribute('data-k')); }
     else if (act === 'proof-check') { cur.phase = 'grade'; render(); }
     else if (act === 'proof-none') { cur.phase = 'grade'; cur.none = true; render(); }
@@ -1449,6 +1518,22 @@ MM.addTopic({
   var rz = null;
   window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(drawCharts, 150); });
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') save(); });
+
+  // Transfer link: #start-1250 sets the starting rating on a device with no progress yet.
+  // It never overwrites existing progress.
+  (function startLink() {
+    var m = /^#start-(\d{3,4})$/.exec(location.hash || '');
+    if (!m) return;
+    var v = Math.max(400, Math.min(2400, Number(m[1])));
+    if (S.rating == null && S.n === 0) {
+      S.rating = v; S.peak = v; S.hist = [[Date.now(), v]];
+      S.diag = { ts: Date.now(), perf: v, bySec: {}, ok: {}, ans: {}, applied: true, imported: true };
+      S.diagRun = null; S.notice = 'start';
+      save();
+      currentGoal();
+    }
+    try { history.replaceState(null, '', location.pathname + location.search + '#today'); } catch (e) { location.hash = '#today'; }
+  })();
 
   render();
 })();
