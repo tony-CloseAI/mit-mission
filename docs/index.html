@@ -1,0 +1,1457 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Тренажёр олимпиадной математики для подготовки к Республиканской олимпиаде (RFO).">
+<meta name="theme-color" content="#F1F2F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1015" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='%23D7A42B'/%3E%3C/svg%3E">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>MIT mission</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&amp;family=Onest:wght@400;500;600;700&amp;family=PT+Serif:ital,wght@0,400;0,700;1,400&amp;display=swap">
+<style>
+/* Layout: an athlete's training log. A rating readout up top like a chess clock, one calm column of work below,
+   problem statements set in a serif like an olympiad sheet, a single gold accent reserved for the goal. */
+:root{
+  --bg:#F1F2F4; --surface:#FFFFFF; --surface-2:#F6F7F9; --ink:#14171C; --ink-2:#555D69; --ink-3:#7F8793;
+  --rule:#DDE0E5; --rule-2:#C5CAD2;
+  --gold:#8F6604; --gold-fill:#D7A42B; --gold-soft:rgba(215,164,43,.16);
+  --good:#1D7748; --good-soft:rgba(29,119,72,.11); --bad:#B0281F; --bad-soft:rgba(176,40,31,.09);
+  --font-ui:"Onest","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  --font-math:"PT Serif",Georgia,"Times New Roman",serif;
+  --font-num:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1015; --surface:#151A21; --surface-2:#1A2029; --ink:#E7EAEE; --ink-2:#A3ACB8; --ink-3:#737C88;
+    --rule:#262D37; --rule-2:#36404C;
+    --gold:#E4B54A; --gold-fill:#E4B54A; --gold-soft:rgba(228,181,74,.14);
+    --good:#56C58C; --good-soft:rgba(86,197,140,.13); --bad:#F2756B; --bad-soft:rgba(242,117,107,.13);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1015; --surface:#151A21; --surface-2:#1A2029; --ink:#E7EAEE; --ink-2:#A3ACB8; --ink-3:#737C88;
+  --rule:#262D37; --rule-2:#36404C;
+  --gold:#E4B54A; --gold-fill:#E4B54A; --gold-soft:rgba(228,181,74,.14);
+  --good:#56C58C; --good-soft:rgba(86,197,140,.13); --bad:#F2756B; --bad-soft:rgba(242,117,107,.13);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--gold-fill);outline-offset:2px;border-radius:4px}
+h1,h2,h3{text-wrap:balance;margin:0}
+.m{font-family:var(--font-math);font-style:italic;white-space:nowrap}
+sup,sub{line-height:0;font-size:.72em}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--rule)}
+.top-in{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:8px 20px;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:baseline;gap:8px;text-decoration:none;margin-right:auto}
+.brand-mark{width:12px;height:12px;border-radius:50%;background:var(--gold-fill);box-shadow:0 0 0 3px var(--gold-soft);align-self:center}
+.brand-name{font-weight:700;font-size:18px;letter-spacing:-.01em}
+.brand-sub{font-size:13px;color:var(--ink-3)}
+.nav{display:flex;gap:2px}
+.nav a{text-decoration:none;font-size:15px;font-weight:500;color:var(--ink-2);padding:6px 11px;border-radius:8px}
+.nav a:hover{background:var(--surface-2);color:var(--ink)}
+.nav a[aria-current="page"]{color:var(--ink);background:var(--surface-2)}
+.rchip{font-family:var(--font-num);font-weight:700;font-size:15px;text-decoration:none;padding:5px 10px;border-radius:8px;border:1px solid var(--gold-fill);color:var(--gold);background:var(--gold-soft);font-variant-numeric:tabular-nums}
+
+/* page */
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.pg{font-size:clamp(28px,4.4vw,40px);font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.pg-sub{color:var(--ink-2);margin:8px 0 0;max-width:66ch}
+.crumbs{font-size:14px;color:var(--ink-3)}
+.crumbs a{color:var(--ink-2);text-decoration:none}
+.crumbs a:hover{text-decoration:underline}
+h2{font-size:21px;font-weight:650;letter-spacing:-.01em}
+.lab{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.muted{color:var(--ink-3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:20px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 15px var(--font-ui);padding:10px 16px;border-radius:10px;border:1px solid var(--ink);background:var(--ink);color:var(--surface);text-decoration:none;cursor:pointer}
+.btn:hover{opacity:.9}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule-2)}
+.btn.ghost:hover{background:var(--surface-2);opacity:1}
+.btn.small{padding:7px 12px;font-size:14px}
+.btn[disabled]{opacity:.45;cursor:default}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:20px;align-items:stretch}
+.hero-main{display:flex;flex-direction:column;gap:6px}
+.rating-big{font-family:var(--font-num);font-weight:700;font-size:clamp(56px,9vw,80px);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.delta{font-family:var(--font-num);font-weight:700;font-variant-numeric:tabular-nums}
+.delta.up{color:var(--good)} .delta.down{color:var(--bad)} .delta.zero{color:var(--ink-3)}
+.hero-sub{color:var(--ink-2);font-size:14px}
+.next{margin-top:auto;padding-top:10px;font-size:15px}
+.next b{font-family:var(--font-num)}
+.chart{position:relative;min-height:170px}
+.chart svg{display:block}
+.chart-empty{display:flex;align-items:center;justify-content:center;min-height:170px;border:1px dashed var(--rule-2);border-radius:12px;color:var(--ink-3);font-size:14px;text-align:center;padding:16px}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);font-size:13px;padding:6px 9px;border-radius:7px;white-space:nowrap;transform:translate(-50%,-100%);margin-top:-10px}
+.tip b{font-family:var(--font-num)}
+
+/* ladder */
+.ladder{padding:30px 6px 30px}
+.ladder-track{position:relative;height:8px;border-radius:999px;background:var(--rule)}
+.ladder-fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--gold-fill)}
+.tick{position:absolute;top:-3px;width:2px;height:14px;background:var(--rule-2);transform:translateX(-1px)}
+.tick.goal{background:var(--gold-fill);width:3px}
+.tick-l{position:absolute;left:50%;transform:translateX(-50%);font-size:11.5px;line-height:1.2;color:var(--ink-3);text-align:center;white-space:nowrap}
+.tick.up .tick-l{bottom:18px} .tick.down .tick-l{top:18px}
+.tick-l b{display:block;font-family:var(--font-num);font-weight:500;font-size:11px}
+.tick.goal .tick-l{color:var(--gold);font-weight:600}
+.tick.passed .tick-l{color:var(--ink-2)}
+.you{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:var(--surface);border:3px solid var(--ink);transform:translate(-50%,-50%)}
+
+/* cards */
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.card{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:16px;text-decoration:none;min-width:0}
+a.card:hover{border-color:var(--rule-2)}
+.card-title{font-weight:600;font-size:15px;line-height:1.35}
+.card-q{font-family:var(--font-math);font-size:15.5px;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card-meta{margin-top:auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--ink-3)}
+.card.featured{border-color:var(--gold-fill);box-shadow:inset 0 0 0 1px var(--gold-soft)}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--rule-2);color:var(--ink-2);white-space:nowrap}
+.pill.good{color:var(--good);border-color:var(--good);background:var(--good-soft)}
+.pill.bad{color:var(--bad);border-color:var(--bad);background:var(--bad-soft)}
+.pill.gold{color:var(--gold);border-color:var(--gold-fill);background:var(--gold-soft)}
+.pill.num{font-family:var(--font-num);font-weight:500}
+
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.bar{height:8px;border-radius:999px;background:var(--rule);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--ink);border-radius:999px}
+.bar.goldbar>i{background:var(--gold-fill)}
+.stat-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:8px}
+.stat-row b{font-family:var(--font-num);font-size:22px;font-variant-numeric:tabular-nums}
+.ev{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:10px}
+.ev li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px}
+.ev .ev-n{font-weight:600}
+.ev .ev-d{font-family:var(--font-num);font-weight:700;font-variant-numeric:tabular-nums}
+.ev .ev-note{grid-column:1/-1;font-size:13px;color:var(--ink-3)}
+
+/* welcome */
+.welcome{display:flex;flex-direction:column;gap:16px;max-width:760px}
+.welcome h1{font-size:clamp(34px,6vw,54px);font-weight:700;letter-spacing:-.025em;line-height:1.05}
+.lead{font-size:18px;color:var(--ink-2);margin:0;max-width:62ch}
+.steps{margin:6px 0 0;padding-left:22px;display:grid;gap:8px;color:var(--ink-2)}
+.steps b{color:var(--ink)}
+
+/* map */
+.msec{display:flex;flex-direction:column;gap:10px}
+.mlist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.mitem{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px;border-radius:12px;border:1px solid var(--rule);background:var(--surface);text-decoration:none}
+a.mitem:hover{border-color:var(--rule-2)}
+.mitem .mt{font-weight:600;margin-right:auto}
+.mitem.soon{background:transparent;border-style:dashed}
+.mitem.soon .mt{font-weight:500;color:var(--ink-2)}
+.mprog{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-3);font-family:var(--font-num)}
+.mprog .bar{width:120px}
+
+/* topic */
+.levels{display:grid;gap:12px}
+.lvl{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) auto;gap:6px 16px;align-items:center}
+.lvl-n{font-weight:600;font-size:15px}
+.lvl-n span{display:block;font-weight:400;font-size:13px;color:var(--ink-3)}
+.lvl-c{font-family:var(--font-num);font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.lessons{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.lesson{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border-radius:10px;text-decoration:none;border:1px solid var(--rule);background:var(--surface)}
+.lesson:hover{border-color:var(--rule-2)}
+.ln{font-family:var(--font-num);font-weight:700;color:var(--ink-3)}
+.lt{font-weight:500}
+.lm{font-size:13px;color:var(--ink-3)}
+.lesson.read .ln{color:var(--good)} .lesson.read .lm{color:var(--good)}
+.pgroup{display:flex;flex-direction:column;gap:10px}
+.pgroup h3{font-size:16px;font-weight:600}
+.pgroup h3 span{font-weight:400;color:var(--ink-3);font-size:14px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.pchip{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;gap:0 8px;padding:10px 12px;border-radius:10px;border:1px solid var(--rule);background:var(--surface);text-decoration:none}
+.pchip:hover{border-color:var(--rule-2)}
+.pchip .pn{font-weight:700;font-size:15px}
+.pchip .ps{justify-self:end;font-size:13px;font-weight:700}
+.pchip .pr{grid-column:1/-1;font-family:var(--font-num);font-size:12px;color:var(--ink-3)}
+.pchip.clean{border-color:var(--good);background:var(--good-soft)} .pchip.clean .ps{color:var(--good)}
+.pchip.ok .ps{color:var(--good)}
+.pchip.bad{border-color:var(--bad)} .pchip.bad .ps{color:var(--bad)}
+.pchip.rec{box-shadow:0 0 0 2px var(--gold-fill)}
+
+/* lesson */
+.lessonbody{max-width:72ch;font-size:17px}
+.lessonbody h3{font-size:19px;margin:26px 0 8px}
+.lessonbody p{margin:0 0 12px}
+.lessonbody ol,.lessonbody ul{margin:0 0 12px;padding-left:22px;display:grid;gap:6px}
+.lessonbody .m{white-space:normal}
+.box,.ex,.trick{border-radius:12px;padding:16px 18px;margin:18px 0}
+.box{background:var(--surface);border:1px solid var(--rule)}
+.ex{background:var(--surface-2);border:1px solid var(--rule)}
+.trick{background:var(--gold-soft);border:1px solid var(--gold-fill)}
+.box-h,.ex-h,.trick-h{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
+.trick-h{color:var(--gold)}
+.box p:last-child,.ex p:last-child,.trick p:last-child{margin-bottom:0}
+.calc{font-family:var(--font-math);line-height:1.9}
+.tblwrap{overflow-x:auto}
+.tbl{border-collapse:collapse;margin:8px 0 16px;font-size:15px}
+.tbl th,.tbl td{border-bottom:1px solid var(--rule);padding:7px 14px 7px 0;text-align:left;vertical-align:top}
+.tbl th{font-weight:600;color:var(--ink-2);font-size:13px}
+
+/* problem */
+.phead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.phead h1{font-size:26px;font-weight:700;letter-spacing:-.01em;margin-right:auto}
+.timer{font-family:var(--font-num);font-size:15px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.stmt{font-family:var(--font-math);font-size:clamp(19px,2.4vw,22px);line-height:1.6;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:22px 24px;max-width:780px}
+.note{font-size:14px;color:var(--gold);margin-top:10px;font-family:var(--font-ui)}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:780px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;font:400 19px var(--font-math);color:var(--ink);background:var(--surface);border:1px solid var(--rule-2);border-radius:12px;padding:13px 16px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--ink)}
+.opt .ol{font:700 13px var(--font-num);color:var(--ink-3);border:1px solid var(--rule-2);border-radius:6px;padding:1px 6px}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt[disabled]{cursor:default}
+.ansform{display:flex;flex-wrap:wrap;gap:10px;max-width:780px}
+.ansform input{flex:0 1 240px;min-width:0;font:500 20px var(--font-num);color:var(--ink);background:var(--surface);border:1px solid var(--rule-2);border-radius:10px;padding:10px 14px}
+.ansform input:focus{outline:none;border-color:var(--ink)}
+.fb{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;max-width:780px;padding:14px 18px;border-radius:12px}
+.fb.ok{background:var(--good-soft);border:1px solid var(--good)}
+.fb.no{background:var(--bad-soft);border:1px solid var(--bad)}
+.fb-t{font-weight:700;font-size:18px}
+.fb.ok .fb-t{color:var(--good)} .fb.no .fb-t{color:var(--bad)}
+.fb .delta{font-size:18px}
+.fb-sub{font-size:14px;color:var(--ink-2)}
+.hints{display:flex;flex-direction:column;gap:8px;max-width:780px}
+.hint{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:12px 16px;font-size:16px}
+.hint .lab{margin-bottom:4px}
+.sol{max-width:780px;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:18px 22px}
+.sol .lab{margin-bottom:8px}
+.sol-t{font-family:var(--font-math);font-size:18px;line-height:1.6}
+.pnav{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;max-width:780px;border-top:1px solid var(--rule);padding-top:16px}
+
+/* proof */
+.proofbox{max-width:780px;display:flex;flex-direction:column;gap:8px}
+.mkeys{display:flex;flex-wrap:wrap;gap:4px}
+.mk{min-width:36px;height:34px;font:500 16px var(--font-math);color:var(--ink);background:var(--surface);border:1px solid var(--rule-2);border-radius:7px;cursor:pointer;padding:0 8px}
+.mk:hover{border-color:var(--ink)}
+.mk.w{font:600 13px var(--font-ui)}
+textarea.draft{width:100%;min-height:220px;resize:vertical;font:400 18px/1.6 var(--font-math);color:var(--ink);background:var(--surface);border:1px solid var(--rule-2);border-radius:12px;padding:14px 16px}
+textarea.draft:focus{outline:none;border-color:var(--ink)}
+.small{font-size:13.5px;color:var(--ink-3)}
+.rubric{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.rubric label{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--rule);border-radius:10px;cursor:pointer;background:var(--surface)}
+.rubric input{width:18px;height:18px;margin:3px 0 0;accent-color:var(--good)}
+.rubric .rp{font-family:var(--font-num);font-weight:700;color:var(--ink-2)}
+.rubric .rt{font-size:15.5px}
+.grade-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.grade-total{font-family:var(--font-num);font-size:22px;font-weight:700}
+
+/* diag & profile */
+.dprog{display:flex;align-items:center;gap:12px;max-width:780px}
+.dprog .bar{flex:1}
+.sec-res{display:grid;gap:10px;max-width:640px}
+.sec-res .stat-row{margin:0}
+.reslist{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-width:780px}
+.reslist details{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:10px 14px}
+.reslist summary{cursor:pointer;display:flex;gap:10px;align-items:baseline}
+.reslist summary .rs{font-weight:700;width:18px}
+.reslist .rs.y{color:var(--good)} .reslist .rs.n{color:var(--bad)}
+.reslist .rq{font-family:var(--font-math)}
+.reslist .rsol{font-family:var(--font-math);color:var(--ink-2);margin-top:8px}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:14px 16px}
+.tile b{display:block;font-family:var(--font-num);font-size:26px;font-variant-numeric:tabular-nums;margin-top:4px}
+.tile span{font-size:13px;color:var(--ink-3)}
+.code{width:100%;min-height:90px;font:12px/1.45 var(--font-num);color:var(--ink);background:var(--surface-2);border:1px solid var(--rule);border-radius:10px;padding:10px;resize:vertical;word-break:break-all}
+.tlist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.tlist li{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:14px 16px}
+.tlist .tq{font-family:var(--font-math);font-size:17px}
+.tlist .td{font-family:var(--font-math);color:var(--ink-2);white-space:pre-wrap;margin-top:8px;font-size:16px}
+.warn{background:var(--bad-soft);border:1px solid var(--bad);border-radius:12px;padding:12px 16px;font-size:15px}
+.foot{max-width:1040px;margin:0 auto;padding-top:20px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-3)}
+
+@media (max-width:860px){
+  .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hero{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .grid4,.row2,.opts{grid-template-columns:1fr}
+  .lvl{grid-template-columns:minmax(0,1fr) auto}
+  .lvl .bar{grid-column:1/-1;grid-row:2}
+  .brand-sub{display:none}
+  .stmt{padding:16px 16px}
+  .tick-l{font-size:10.5px}
+  .tick-l b{font-size:10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+window.MM = { topics: [], diag: null, roadmap: [],
+  addTopic: function (t) { this.topics.push(t); },
+  setDiagnostic: function (d) { this.diag = d; },
+  setRoadmap: function (r) { this.roadmap = r; } };
+</script>
+<script>
+// ---- content/roadmap.js ----
+// Карта тем по официальной программе RFO по математике (2023–2024).
+// Темы без id ещё не готовы и показываются как «скоро».
+MM.setRoadmap([
+  { sec: 'nt', title: 'Теория чисел', items: [
+    { id: 'div', title: 'Делимость и остатки' },
+    { title: 'Сравнения по модулю. Теоремы Ферма, Эйлера, Вильсона' },
+    { title: 'Уравнения в целых числах' },
+    { title: 'Рациональные числа, дроби и цифры числа' }
+  ] },
+  { sec: 'alg', title: 'Алгебра', items: [
+    { title: 'Многочлены. Теоремы Безу и Виета' },
+    { title: 'Уравнения и системы: модули, корни, высшие степени' },
+    { title: 'Неравенства и средние величины' },
+    { title: 'Последовательности, прогрессии, индукция' },
+    { title: 'Функции и функциональные уравнения' },
+    { title: 'Комплексные числа', note: '10 класс' }
+  ] },
+  { sec: 'geo', title: 'Геометрия', items: [
+    { title: 'Треугольники: равенство, подобие, замечательные линии' },
+    { title: 'Окружность: вписанные углы и касательные' },
+    { title: 'Четырёхугольники и площади' },
+    { title: 'Теоремы Чевы, Менелая, Птолемея, Стюарта' },
+    { title: 'Тригонометрия. Теоремы синусов и косинусов' },
+    { title: 'Векторы и метод координат', note: '10 класс' }
+  ] },
+  { sec: 'comb', title: 'Комбинаторика', items: [
+    { title: 'Правила подсчёта, перестановки, сочетания' },
+    { title: 'Принцип Дирихле' },
+    { title: 'Вероятность и бином Ньютона' }
+  ] },
+  { sec: 'mock', title: 'Пробные олимпиады', items: [
+    { title: 'Пробный районный этап — тест на время' },
+    { title: 'Пробный полуфинал — тест на время' },
+    { title: 'Пробный финал — задачи на доказательство' }
+  ] }
+]);
+
+</script>
+<script>
+// ---- content/diagnostic.js ----
+// Вводная диагностика: 17 задач по четырём разделам, от школьного уровня до районного этапа.
+// Подсказок нет; по результату считается стартовый рейтинг.
+MM.setDiagnostic({
+  minutes: 40,
+  problems: [
+    { id: 'd01', sec: 'nt', r: 850, type: 'num', q: `Найдите остаток от деления числа 2026 на 7.`, a: ['3'],
+      sol: `2026 = 7 · 289 + 3, остаток 3.` },
+    { id: 'd02', sec: 'nt', r: 950, type: 'choice', q: `Сколько натуральных делителей у числа 36?`, opts: ['6', '8', '9', '12'], a: 2,
+      sol: `36 = 2<sup>2</sup> · 3<sup>2</sup>, делителей (2 + 1)(2 + 1) = 9: 1, 2, 3, 4, 6, 9, 12, 18, 36.` },
+    { id: 'd03', sec: 'nt', r: 1150, type: 'num', q: `Найдите НОД(391, 323).`, a: ['17'],
+      sol: `Алгоритм Евклида: 391 − 323 = 68; 323 = 4 · 68 + 51; 68 = 51 + 17; 51 = 3 · 17. НОД = 17. (391 = 17 · 23, 323 = 17 · 19.)` },
+    { id: 'd04', sec: 'nt', r: 1350, type: 'num', q: `Какой цифрой оканчивается число 7<sup>2026</sup>?`, a: ['9'],
+      sol: `Последние цифры степеней семёрки повторяются: 7, 9, 3, 1. 2026 = 4 · 506 + 2, поэтому последняя цифра как у 7<sup>2</sup> = 49 — это 9.` },
+    { id: 'd05', sec: 'alg', r: 850, type: 'num', q: `Решите уравнение 3(x − 2) = x + 8.`, a: ['7'],
+      sol: `3x − 6 = x + 8, 2x = 14, x = 7.` },
+    { id: 'd06', sec: 'alg', r: 1000, type: 'choice', q: `Упростите выражение (a + b)<sup>2</sup> − (a − b)<sup>2</sup>.`, opts: ['2ab', '4ab', '2a<sup>2</sup> + 2b<sup>2</sup>', '0'], a: 1,
+      sol: `(a<sup>2</sup> + 2ab + b<sup>2</sup>) − (a<sup>2</sup> − 2ab + b<sup>2</sup>) = 4ab.` },
+    { id: 'd07', sec: 'alg', r: 1200, type: 'num', q: `Числа x<sub>1</sub> и x<sub>2</sub> — корни уравнения x<sup>2</sup> − 7x + 5 = 0. Найдите x<sub>1</sub><sup>2</sup> + x<sub>2</sub><sup>2</sup>.`, a: ['39'],
+      sol: `По теореме Виета x<sub>1</sub> + x<sub>2</sub> = 7, x<sub>1</sub>x<sub>2</sub> = 5. Тогда x<sub>1</sub><sup>2</sup> + x<sub>2</sub><sup>2</sup> = (x<sub>1</sub> + x<sub>2</sub>)<sup>2</sup> − 2x<sub>1</sub>x<sub>2</sub> = 49 − 10 = 39.` },
+    { id: 'd08', sec: 'alg', r: 1400, type: 'num', q: `Найдите наименьшее значение выражения x<sup>2</sup> − 6x + 13.`, a: ['4'],
+      sol: `x<sup>2</sup> − 6x + 13 = (x − 3)<sup>2</sup> + 4 ≥ 4, равенство при x = 3.` },
+    { id: 'd09', sec: 'geo', r: 850, type: 'num', q: `Катеты прямоугольного треугольника равны 6 и 8. Найдите гипотенузу.`, a: ['10'],
+      sol: `По теореме Пифагора √(36 + 64) = √100 = 10.` },
+    { id: 'd10', sec: 'geo', r: 1000, type: 'num', q: `Найдите сумму внутренних углов выпуклого шестиугольника (в градусах).`, a: ['720'],
+      sol: `Сумма углов выпуклого n-угольника равна 180° · (n − 2) = 180° · 4 = 720°.` },
+    { id: 'd11', sec: 'geo', r: 1150, type: 'num', q: `Вписанный угол ACB равен 35°. Найдите центральный угол AOB, опирающийся на ту же дугу AB (O — центр окружности). Ответ дайте в градусах.`, a: ['70'],
+      sol: `Вписанный угол равен половине центрального, опирающегося на ту же дугу: ∠AOB = 2 · 35° = 70°.` },
+    { id: 'd12', sec: 'geo', r: 1250, type: 'num', q: `В треугольнике ABC ∠A = 50°, ∠B = 70°. Биссектрисы углов A и B пересекаются в точке I. Найдите ∠AIB (в градусах).`, a: ['120'],
+      sol: `∠IAB = 25°, ∠IBA = 35°, поэтому ∠AIB = 180° − 25° − 35° = 120°.` },
+    { id: 'd13', sec: 'geo', r: 1450, type: 'num', q: `Найдите площадь треугольника со сторонами 13, 14 и 15.`, a: ['84'],
+      sol: `Формула Герона: p = 21, S = √(21 · 8 · 7 · 6) = √7056 = 84.` },
+    { id: 'd14', sec: 'comb', r: 900, type: 'num', q: `Сколькими способами можно рассадить 4 человек на 4 стула, стоящих в ряд?`, a: ['24'],
+      sol: `4! = 4 · 3 · 2 · 1 = 24.` },
+    { id: 'd15', sec: 'comb', r: 1100, type: 'num', q: `Сколько существует двузначных чисел, обе цифры которых чётные?`, a: ['20'],
+      sol: `Первая цифра: 2, 4, 6 или 8 (4 варианта, 0 нельзя). Вторая: 0, 2, 4, 6 или 8 (5 вариантов). Всего 4 · 5 = 20.` },
+    { id: 'd16', sec: 'comb', r: 1300, type: 'num', q: `Сколькими способами из 7 учеников можно выбрать команду из 3 человек?`, a: ['35'],
+      sol: `C(7, 3) = (7 · 6 · 5)/(3 · 2 · 1) = 35.` },
+    { id: 'd17', sec: 'comb', r: 1450, type: 'num', q: `Сколько натуральных чисел от 1 до 100 не делятся ни на 2, ни на 3?`, a: ['33'],
+      sol: `Делятся на 2: 50 чисел, на 3: 33, на 6: 16. По формуле включений-исключений делятся на 2 или на 3: 50 + 33 − 16 = 67. Остаётся 100 − 67 = 33.` }
+  ]
+});
+
+</script>
+<script>
+// ---- content/divisibility.js ----
+// Тема «Делимость и остатки» — фундамент теории чисел для всех этапов RFO.
+// Уровни: 1 — база, 2 — районный этап, 3 — полуфинал (тесты); 4 — финал, 5 — международный (доказательства).
+// r — рейтинг задачи по шкале «как в шахматах».
+MM.addTopic({
+  id: 'div',
+  sec: 'nt',
+  title: 'Делимость и остатки',
+  blurb: `Фундамент теории чисел. На этом строятся задачи всех этапов — от районного теста до финала.`,
+
+  lessons: [
+    { id: 'div-l1', title: 'Делимость и её свойства', mins: 10, html: `
+<p>Целое число <span class="m">a</span> <b>делится</b> на целое число <span class="m">b ≠ 0</span>, если <span class="m">a = b · k</span> для некоторого целого <span class="m">k</span>. Записывают <span class="m">b ∣ a</span> и читают «<span class="m">b</span> делит <span class="m">a</span>».</p>
+<div class="box"><div class="box-h">Запомни</div><ol>
+<li>Если <span class="m">b ∣ a</span> и <span class="m">b ∣ c</span>, то <span class="m">b ∣ a + c</span> и <span class="m">b ∣ a − c</span>.</li>
+<li>Если <span class="m">b ∣ a</span>, то <span class="m">b ∣ a · c</span> для любого целого <span class="m">c</span>.</li>
+<li>Если <span class="m">c ∣ b</span> и <span class="m">b ∣ a</span>, то <span class="m">c ∣ a</span>.</li>
+<li>Если <span class="m">b ∣ a + c</span> и <span class="m">b ∣ a</span>, то <span class="m">b ∣ c</span>. Это главный рабочий приём: вычесть то, что уже делится.</li>
+</ol></div>
+<h3>Последовательные числа</h3>
+<p>Среди любых <span class="m">n</span> последовательных целых чисел ровно одно делится на <span class="m">n</span>. Поэтому произведение двух последовательных чисел всегда чётно, а произведение трёх последовательных делится на 3 и на 2, то есть на 6.</p>
+<div class="ex"><div class="ex-h">Пример</div>
+<p>При каких натуральных <span class="m">n</span> дробь <span class="m">(n + 7)/(n + 2)</span> — целое число?</p>
+<p><b>Решение.</b> Если <span class="m">n + 2 ∣ n + 7</span>, то <span class="m">n + 2</span> делит и разность <span class="m">(n + 7) − (n + 2) = 5</span>. Делители 5 — это 1 и 5, а <span class="m">n + 2 ≥ 3</span>. Значит, <span class="m">n + 2 = 5</span> и <span class="m">n = 3</span>. Проверка: <span class="m">10/5 = 2</span>.</p></div>
+<div class="trick"><div class="trick-h">Олимпиадный приём</div>
+<p>Чтобы понять, когда дробь с <span class="m">n</span> в знаменателе целая, раздели числитель на знаменатель с остатком. Например, <span class="m">(n<sup>2</sup> + 3)/(n − 1) = n + 1 + 4/(n − 1)</span>. Значит, <span class="m">n − 1 ∣ 4</span>, и остаётся перебрать делители четвёрки.</p></div>` },
+
+    { id: 'div-l2', title: 'Признаки делимости', mins: 10, html: `
+<p>Любое число записывается через цифры: <span class="m">4518 = 4 · 1000 + 5 · 100 + 1 · 10 + 8</span>. Все признаки делимости следуют из этой записи.</p>
+<div class="box"><div class="box-h">Запомни</div><ul>
+<li>На <b>2, 5, 10</b> — смотри на последнюю цифру.</li>
+<li>На <b>4 и 25</b> — на число из двух последних цифр. На <b>8 и 125</b> — из трёх последних.</li>
+<li>На <b>3 и 9</b> — на сумму цифр. Более того, число и сумма его цифр дают <b>одинаковый остаток</b> при делении на 9 (и на 3).</li>
+<li>На <b>11</b> — на знакочередующуюся сумму цифр справа налево: <span class="m">a<sub>0</sub> − a<sub>1</sub> + a<sub>2</sub> − …</span></li>
+</ul></div>
+<h3>Почему работает признак делимости на 9</h3>
+<p><span class="m">4518 = 4 · 999 + 5 · 99 + 1 · 9 + (4 + 5 + 1 + 8)</span>. Первые три слагаемых делятся на 9, поэтому 4518 и сумма цифр 18 отличаются на число, кратное 9. На 11 работает та же идея: <span class="m">10 = 11 − 1</span>, <span class="m">100 = 99 + 1</span>, <span class="m">1000 = 1001 − 1</span>, и знаки чередуются.</p>
+<p>Пример на 11: у числа 918 082 знакочередующаяся сумма <span class="m">2 − 8 + 0 − 8 + 1 − 9 = −22</span> делится на 11, значит и число делится на 11.</p>
+<h3>Делимость на составное число</h3>
+<p>Разложи делитель на <b>взаимно простые</b> множители и проверь каждый: на 6 — это на 2 и на 3, на 36 — на 4 и на 9, на 72 — на 8 и на 9. Осторожно: делимость на 2 и на 6 ещё не означает делимости на 12 (пример — число 6), потому что 2 и 6 не взаимно просты.</p>
+<div class="ex"><div class="ex-h">Пример</div>
+<p>Найдите все четырёхзначные числа вида <span class="m">2a4b</span>, которые делятся на 45.</p>
+<p><b>Решение.</b> 45 = 5 · 9. На 5: <span class="m">b = 0</span> или <span class="m">b = 5</span>. На 9: сумма цифр <span class="m">6 + a + b</span> кратна 9. Если <span class="m">b = 0</span>, то <span class="m">a = 3</span> — число 2340. Если <span class="m">b = 5</span>, то <span class="m">a = 7</span> — число 2745. Ответ: 2340 и 2745.</p></div>` },
+
+    { id: 'div-l3', title: 'Простые числа и делители', mins: 12, html: `
+<p>Натуральное число <b>простое</b>, если у него ровно два делителя: 1 и оно само. Число 1 не простое. Число 2 — единственное чётное простое.</p>
+<div class="box"><div class="box-h">Основная теорема арифметики</div>
+<p>Каждое натуральное число больше 1 раскладывается в произведение простых, и притом единственным образом (с точностью до порядка): <span class="m">n = p<sub>1</sub><sup>a<sub>1</sub></sup> · p<sub>2</sub><sup>a<sub>2</sub></sup> · … · p<sub>k</sub><sup>a<sub>k</sub></sup></span>.</p></div>
+<h3>Как проверить, простое ли число</h3>
+<p>Достаточно проверить делимость на простые числа, не превосходящие <span class="m">√n</span>. Если у <span class="m">n</span> есть делитель <span class="m">d > √n</span>, то <span class="m">n/d < √n</span> — тоже делитель, и его мы уже проверили.</p>
+<h3>Число и сумма делителей</h3>
+<p>Если <span class="m">n = p<sub>1</sub><sup>a<sub>1</sub></sup> · … · p<sub>k</sub><sup>a<sub>k</sub></sup></span>, то число делителей <span class="m">τ(n) = (a<sub>1</sub> + 1)(a<sub>2</sub> + 1)…(a<sub>k</sub> + 1)</span>: каждый простой множитель входит в делитель в степени от 0 до <span class="m">a<sub>i</sub></span>.</p>
+<p>Например, <span class="m">72 = 2<sup>3</sup> · 3<sup>2</sup></span>, делителей <span class="m">4 · 3 = 12</span>. Сумма делителей <span class="m">σ(72) = (1 + 2 + 4 + 8)(1 + 3 + 9) = 15 · 13 = 195</span>.</p>
+<p>У полного квадрата число делителей нечётно: делители разбиваются на пары <span class="m">d</span> и <span class="m">n/d</span>, и только <span class="m">√n</span> стоит в паре сам с собой.</p>
+<h3>Простых чисел бесконечно много</h3>
+<p>Доказательство Евклида: если бы простых было конечно много, <span class="m">p<sub>1</sub>, …, p<sub>k</sub></span>, то число <span class="m">p<sub>1</sub>p<sub>2</sub>…p<sub>k</sub> + 1</span> не делилось бы ни на одно из них (остаток 1), но у него есть простой делитель. Противоречие.</p>
+<div class="trick"><div class="trick-h">Формула Лежандра</div>
+<p>Показатель простого <span class="m">p</span> в разложении <span class="m">n!</span> равен <span class="m">[n/p] + [n/p<sup>2</sup>] + [n/p<sup>3</sup>] + …</span>, где <span class="m">[x]</span> — целая часть. Например, число 30! оканчивается на <span class="m">[30/5] + [30/25] = 6 + 1 = 7</span> нулей: каждый ноль — это пара 2 · 5, а двоек всегда больше, чем пятёрок.</p></div>` },
+
+    { id: 'div-l4', title: 'НОД, НОК и алгоритм Евклида', mins: 12, html: `
+<p><b>НОД</b> — наибольший общий делитель, <b>НОК</b> — наименьшее общее кратное. По разложениям: НОД берёт каждое простое в наименьшей степени, НОК — в наибольшей.</p>
+<div class="box"><div class="box-h">Запомни</div><ul>
+<li><span class="m">НОД(a, b) · НОК(a, b) = a · b</span>. Пример: НОД(8, 20) = 4, НОК(8, 20) = 40, и <span class="m">4 · 40 = 160 = 8 · 20</span>.</li>
+<li><span class="m">НОД(a, b) = НОД(a − b, b) = НОД(a − kb, b)</span> для любого целого <span class="m">k</span>.</li>
+<li>Числа <b>взаимно просты</b>, если их НОД равен 1.</li>
+<li>Если <span class="m">a ∣ bc</span> и <span class="m">НОД(a, b) = 1</span>, то <span class="m">a ∣ c</span>. Например, если <span class="m">9 ∣ 4c</span>, то <span class="m">9 ∣ c</span>.</li>
+</ul></div>
+<h3>Алгоритм Евклида</h3>
+<p>Заменяем большее число остатком от деления на меньшее, пока не получим 0:</p>
+<p class="calc"><span class="m">1071 = 2 · 462 + 147</span><br><span class="m">462 = 3 · 147 + 21</span><br><span class="m">147 = 7 · 21 + 0</span></p>
+<p>Последний ненулевой остаток — 21. Значит, НОД(1071, 462) = 21. Алгоритм работает быстро даже для огромных чисел, и раскладывать на множители не нужно.</p>
+<div class="trick"><div class="trick-h">Олимпиадный приём: несократимость дроби</div>
+<p>Чтобы доказать, что дробь несократима, найди комбинацию числителя и знаменателя, равную 1. Например, дробь <span class="m">(n + 1)/(2n + 1)</span>: если <span class="m">d</span> делит оба числа, то <span class="m">d</span> делит <span class="m">2(n + 1) − (2n + 1) = 1</span>, значит <span class="m">d = 1</span>.</p></div>` },
+
+    { id: 'div-l5', title: 'Остатки и сравнения по модулю', mins: 14, html: `
+<p>Любое целое <span class="m">a</span> делится на натуральное <span class="m">m</span> с остатком: <span class="m">a = m · q + r</span>, где <span class="m">0 ≤ r < m</span>, и такой остаток единственный.</p>
+<p>Говорят, что <span class="m">a</span> <b>сравнимо</b> с <span class="m">b</span> по модулю <span class="m">m</span>, и пишут <span class="m">a ≡ b (mod m)</span>, если <span class="m">m ∣ a − b</span>. Это то же самое, что одинаковые остатки при делении на <span class="m">m</span>.</p>
+<div class="box"><div class="box-h">Что можно делать со сравнениями</div><ul>
+<li>Складывать, вычитать и умножать сравнения по одному модулю.</li>
+<li>Возводить в натуральную степень: если <span class="m">a ≡ b</span>, то <span class="m">a<sup>n</sup> ≡ b<sup>n</sup> (mod m)</span>.</li>
+<li><b>Нельзя</b> просто делить: <span class="m">6 ≡ 2 (mod 4)</span>, но <span class="m">3 ≢ 1 (mod 4)</span>.</li>
+</ul></div>
+<div class="ex"><div class="ex-h">Пример</div>
+<p>Найдите остаток от деления <span class="m">2026 · 2027 + 2028<sup>2</sup></span> на 5.</p>
+<p><b>Решение.</b> По модулю 5: <span class="m">2026 ≡ 1</span>, <span class="m">2027 ≡ 2</span>, <span class="m">2028 ≡ 3</span>. Значит, выражение <span class="m">≡ 1 · 2 + 3<sup>2</sup> = 11 ≡ 1</span>. Остаток 1, и огромные числа перемножать не пришлось.</p></div>
+<h3>Приём «минус один»</h3>
+<p>Удобно брать отрицательные остатки: <span class="m">2 ≡ −1 (mod 3)</span>, поэтому <span class="m">2<sup>n</sup> ≡ (−1)<sup>n</sup> (mod 3)</span>. Аналогично <span class="m">10 ≡ −1 (mod 11)</span> — отсюда признак делимости на 11.</p>
+<h3>Остатки квадратов — выучи наизусть</h3>
+<table class="tbl"><tr><th>Модуль</th><th>Квадраты дают остатки</th></tr>
+<tr><td>3</td><td>0, 1</td></tr><tr><td>4</td><td>0, 1</td></tr><tr><td>5</td><td>0, 1, 4</td></tr><tr><td>8</td><td>0, 1, 4 (нечётный квадрат — всегда 1)</td></tr><tr><td>9</td><td>0, 1, 4, 7</td></tr></table>
+<div class="trick"><div class="trick-h">Олимпиадный приём: перебор остатков</div>
+<p>Чтобы доказать, что выражение никогда не делится на <span class="m">m</span>, переберите все остатки <span class="m">n</span> по модулю <span class="m">m</span>. Например, <span class="m">n<sup>2</sup> + 1</span> не делится на 3: <span class="m">n<sup>2</sup> ≡ 0</span> или <span class="m">1</span>, значит <span class="m">n<sup>2</sup> + 1 ≡ 1</span> или <span class="m">2 (mod 3)</span>.</p></div>` },
+
+    { id: 'div-l6', title: 'Остатки степеней. Малая теорема Ферма', mins: 14, html: `
+<p>Остатки степеней всегда рано или поздно начинают повторяться. Найди период — и любая огромная степень становится простой.</p>
+<h3>Последние цифры степеней</h3>
+<table class="tbl"><tr><th>Основание оканчивается на</th><th>Последние цифры степеней</th><th>Период</th></tr>
+<tr><td>2</td><td>2, 4, 8, 6</td><td>4</td></tr><tr><td>3</td><td>3, 9, 7, 1</td><td>4</td></tr><tr><td>4</td><td>4, 6</td><td>2</td></tr><tr><td>7</td><td>7, 9, 3, 1</td><td>4</td></tr><tr><td>8</td><td>8, 4, 2, 6</td><td>4</td></tr><tr><td>9</td><td>9, 1</td><td>2</td></tr><tr><td>0, 1, 5, 6</td><td>не меняется</td><td>1</td></tr></table>
+<p>Пример: <span class="m">2026 = 4 · 506 + 2</span>, поэтому <span class="m">2<sup>2026</sup></span> оканчивается так же, как <span class="m">2<sup>2</sup></span>, — на 4.</p>
+<div class="box"><div class="box-h">Малая теорема Ферма</div>
+<p>Если <span class="m">p</span> — простое и <span class="m">p ∤ a</span>, то <span class="m">a<sup>p−1</sup> ≡ 1 (mod p)</span>.</p></div>
+<div class="ex"><div class="ex-h">Пример</div>
+<p>Найдите остаток от деления <span class="m">3<sup>100</sup></span> на 7.</p>
+<p><b>Решение.</b> По теореме Ферма <span class="m">3<sup>6</sup> ≡ 1 (mod 7)</span>. <span class="m">100 = 6 · 16 + 4</span>, значит <span class="m">3<sup>100</sup> ≡ 3<sup>4</sup> = 81 = 77 + 4</span>. Остаток 4.</p></div>
+<h3>Порядок числа</h3>
+<p>Наименьшее натуральное <span class="m">d</span>, при котором <span class="m">a<sup>d</sup> ≡ 1 (mod m)</span>, называют <b>порядком</b> <span class="m">a</span>. Важный факт: если <span class="m">a<sup>k</sup> ≡ 1 (mod m)</span>, то <span class="m">d ∣ k</span>. В частности, порядок по простому модулю <span class="m">p</span> делит <span class="m">p − 1</span>.</p>
+<h3>Последние две цифры</h3>
+<p>Последние две цифры — это остаток по модулю 100. Например, <span class="m">3<sup>20</sup> ≡ 1 (mod 100)</span>, а <span class="m">2026 = 20 · 101 + 6</span>, поэтому <span class="m">3<sup>2026</sup> ≡ 3<sup>6</sup> = 729</span>: число оканчивается на 29.</p>
+<div class="trick"><div class="trick-h">Полезные формулы</div>
+<p><span class="m">a<sup>n</sup> − b<sup>n</sup></span> всегда делится на <span class="m">a − b</span>. При нечётном <span class="m">n</span> число <span class="m">a<sup>n</sup> + b<sup>n</sup></span> делится на <span class="m">a + b</span>. Например, <span class="m">7<sup>100</sup> − 1</span> делится на 6, а <span class="m">2<sup>99</sup> + 1</span> делится на 3.</p></div>` }
+  ],
+
+  problems: [
+    // ── Уровень 1 · База ──
+    { id: 'div-01', lvl: 1, r: 800, type: 'choice', q: `Какое из чисел делится на 9?`, opts: ['1234', '4518', '7001', '3335'], a: 1,
+      hints: [`Вспомни признак делимости на 9.`, `Число делится на 9, если сумма его цифр делится на 9. Посчитай суммы цифр.`],
+      sol: `Суммы цифр: 10, 18, 8, 14. На 9 делится только 18, значит ответ 4518 = 9 · 502.` },
+    { id: 'div-02', lvl: 1, r: 820, type: 'num', q: `Найдите остаток от деления 100 на 7.`, a: ['2'],
+      hints: [`Найди наибольшее число, кратное 7 и не превосходящее 100.`],
+      sol: `7 · 14 = 98, 100 = 98 + 2. Остаток 2.` },
+    { id: 'div-03', lvl: 1, r: 850, type: 'choice', q: `Какое из чисел простое?`, opts: ['51', '57', '87', '89'], a: 3,
+      hints: [`Проверь каждое число на делимость на 3 по сумме цифр.`, `Для оставшегося числа достаточно проверить простые делители до его квадратного корня.`],
+      sol: `51 = 3 · 17, 57 = 3 · 19, 87 = 3 · 29. Число 89 не делится на 2, 3, 5 и 7, а 10<sup>2</sup> = 100 > 89, поэтому других делителей проверять не нужно — 89 простое.` },
+    { id: 'div-04', lvl: 1, r: 880, type: 'num', q: `Найдите НОК(12, 18).`, a: ['36'],
+      hints: [`Разложи оба числа на простые множители.`, `НОК берёт каждое простое в наибольшей степени.`],
+      sol: `12 = 2<sup>2</sup> · 3, 18 = 2 · 3<sup>2</sup>. НОК = 2<sup>2</sup> · 3<sup>2</sup> = 36.` },
+    { id: 'div-05', lvl: 1, r: 900, type: 'num', q: `Сколько натуральных делителей у числа 24?`, a: ['8'],
+      hints: [`Разложи 24 на простые множители.`, `Число делителей числа p<sup>a</sup> · q<sup>b</sup> равно (a + 1)(b + 1).`],
+      sol: `24 = 2<sup>3</sup> · 3, делителей (3 + 1)(1 + 1) = 8: 1, 2, 3, 4, 6, 8, 12, 24.` },
+    { id: 'div-06', lvl: 1, r: 950, type: 'choice', q: `Трёхзначное число 4a7 (a — цифра) делится на 9. Найдите a.`, opts: ['2', '5', '7', '9'], a: 2,
+      hints: [`Признак делимости на 9: сумма цифр.`, `Сумма цифр равна 11 + a. При какой цифре a она делится на 9?`],
+      sol: `4 + a + 7 = 11 + a кратно 9 только при a = 7 (сумма 18). Проверка: 477 = 9 · 53.` },
+    { id: 'div-07', lvl: 1, r: 1000, type: 'num', q: `Найдите НОД(84, 126).`, a: ['42'],
+      hints: [`Разложи числа на простые множители или примени алгоритм Евклида.`],
+      sol: `84 = 2<sup>2</sup> · 3 · 7, 126 = 2 · 3<sup>2</sup> · 7, НОД = 2 · 3 · 7 = 42. Короче: 126 − 84 = 42, а 84 = 2 · 42.` },
+    { id: 'div-08', lvl: 1, r: 1050, type: 'num', q: `Какой остаток даёт число 2027 при делении на 9?`, a: ['2'],
+      hints: [`Число и сумма его цифр дают одинаковый остаток при делении на 9.`],
+      sol: `2 + 0 + 2 + 7 = 11 = 9 + 2, остаток 2. Проверка: 2027 = 9 · 225 + 2.` },
+
+    // ── Уровень 2 · Районный этап ──
+    { id: 'div-09', lvl: 2, r: 1080, type: 'num', q: `Сколько натуральных чисел от 1 до 200 делятся на 6?`, a: ['33'],
+      hints: [`Кратные 6: 6, 12, 18, … Сколько их не больше 200?`],
+      sol: `Их количество — целая часть 200/6, то есть 33 (6 · 33 = 198, а 6 · 34 = 204 > 200).` },
+    { id: 'div-10', lvl: 2, r: 1100, type: 'num', q: `Какой цифрой оканчивается число 3<sup>2027</sup>?`, a: ['7'],
+      hints: [`Выпиши последние цифры степеней тройки: 3, 9, 27, 81, 243, …`, `Последние цифры повторяются с периодом 4. Какой остаток даёт 2027 при делении на 4?`],
+      sol: `Последние цифры: 3, 9, 7, 1, 3, 9, 7, 1, … (период 4). 2027 = 4 · 506 + 3, поэтому последняя цифра как у 3<sup>3</sup> = 27 — это 7.` },
+    { id: 'div-11', lvl: 2, r: 1130, type: 'num', q: `Найдите наименьшее натуральное число, большее 1, которое при делении на 2, 3, 4, 5 и 6 даёт остаток 1.`, a: ['61'],
+      hints: [`Если n даёт остаток 1, то n − 1 делится на 2, 3, 4, 5 и 6.`, `Значит, n − 1 делится на НОК(2, 3, 4, 5, 6).`],
+      sol: `n − 1 делится на НОК(2, 3, 4, 5, 6) = 60. Наименьшее положительное такое n − 1 равно 60, значит n = 61.` },
+    { id: 'div-12', lvl: 2, r: 1160, type: 'num', q: `Сколько натуральных делителей у числа 720?`, a: ['30'],
+      hints: [`Разложи 720 на простые множители.`, `720 = 2<sup>4</sup> · 3<sup>2</sup> · 5. Примени формулу числа делителей.`],
+      sol: `720 = 2<sup>4</sup> · 3<sup>2</sup> · 5, делителей (4 + 1)(2 + 1)(1 + 1) = 30.` },
+    { id: 'div-13', lvl: 2, r: 1200, type: 'choice', q: `Произведение двух натуральных чисел равно 2160, а их НОД равен 12. Чему равно их НОК?`, opts: ['90', '180', '360', '2160'], a: 1,
+      hints: [`Есть формула, связывающая НОД, НОК и произведение двух чисел.`],
+      sol: `НОД · НОК = произведение чисел, поэтому НОК = 2160 : 12 = 180. Такие числа есть, например 36 и 60.` },
+    { id: 'div-14', lvl: 2, r: 1250, type: 'num', q: `Четырёхзначное число a79b (a и b — цифры) делится на 72. Найдите a + b.`, a: ['11'],
+      hints: [`72 = 8 · 9, и числа 8 и 9 взаимно просты.`, `Делимость на 8 определяют три последние цифры 79b, делимость на 9 — сумма цифр.`],
+      sol: `Число делится на 72 ⇔ делится на 8 и на 9. Трёхзначное 79b делится на 8 только при b = 2 (792 = 8 · 99). Сумма цифр a + 18 кратна 9 при a = 0 или a = 9, но a ≠ 0, ведь число четырёхзначное. Значит, a = 9: число 9792 = 72 · 136, и a + b = 11.` },
+    { id: 'div-15', lvl: 2, r: 1260, type: 'num', q: `Найдите остаток от деления 2<sup>100</sup> на 7.`, a: ['2'],
+      hints: [`Посчитай остатки чисел 2, 4, 8, 16, … при делении на 7.`, `2<sup>3</sup> = 8 ≡ 1 (mod 7).`],
+      sol: `2<sup>3</sup> ≡ 1 (mod 7), поэтому 2<sup>99</sup> = (2<sup>3</sup>)<sup>33</sup> ≡ 1 и 2<sup>100</sup> ≡ 2. Остаток 2.` },
+    { id: 'div-16', lvl: 2, r: 1290, type: 'num', q: `Натуральное число n при делении на 6 даёт остаток 5. Какой остаток даёт при делении на 6 число 3n<sup>2</sup> + n?`, a: ['2'],
+      hints: [`Остаток выражения зависит только от остатка n. Подставь вместо n число 5.`],
+      sol: `n ≡ 5 (mod 6), поэтому 3n<sup>2</sup> + n ≡ 3 · 25 + 5 = 80 = 6 · 13 + 2. Остаток 2.` },
+    { id: 'div-17', lvl: 2, r: 1310, type: 'choice', q: `При скольких натуральных n число (n + 12)/n является целым?`, opts: ['4', '5', '6', '12'], a: 2,
+      hints: [`(n + 12)/n = 1 + 12/n.`, `Значит, n должно быть делителем 12.`],
+      sol: `(n + 12)/n = 1 + 12/n — целое ⇔ n ∣ 12. У числа 12 шесть делителей: 1, 2, 3, 4, 6, 12.` },
+    { id: 'div-18', lvl: 2, r: 1330, type: 'num', q: `Найдите НОД(2<sup>12</sup> − 1, 2<sup>8</sup> − 1).`, a: ['15'],
+      hints: [`2<sup>12</sup> − 1 = 4095, 2<sup>8</sup> − 1 = 255. Примени алгоритм Евклида.`, `Есть и красивый факт: НОД(2<sup>a</sup> − 1, 2<sup>b</sup> − 1) = 2<sup>НОД(a, b)</sup> − 1.`],
+      sol: `Алгоритм Евклида: 4095 = 16 · 255 + 15, 255 = 17 · 15. НОД = 15 = 2<sup>4</sup> − 1, что совпадает с 2<sup>НОД(12, 8)</sup> − 1.` },
+    { id: 'div-19', lvl: 2, r: 1340, type: 'num', q: `Сколькими нулями оканчивается число 100! = 1 · 2 · 3 · … · 100?`, a: ['24'],
+      hints: [`Ноль в конце — это множитель 10 = 2 · 5. Двоек в 100! больше, чем пятёрок.`, `Посчитай, сколько раз 5 входит в 100!, по формуле Лежандра.`],
+      sol: `Число нулей равно показателю пятёрки в 100!: [100/5] + [100/25] = 20 + 4 = 24.` },
+    { id: 'div-20', lvl: 2, r: 1340, type: 'num', q: `Найдите сумму всех натуральных делителей числа 36.`, a: ['91'],
+      hints: [`36 = 2<sup>2</sup> · 3<sup>2</sup>.`, `Сумма делителей равна (1 + 2 + 4)(1 + 3 + 9).`],
+      sol: `(1 + 2 + 4)(1 + 3 + 9) = 7 · 13 = 91. Проверка: 1 + 2 + 3 + 4 + 6 + 9 + 12 + 18 + 36 = 91.` },
+
+    // ── Уровень 3 · Полуфинал ──
+    { id: 'div-21', lvl: 3, r: 1380, type: 'num', q: `Найдите остаток от деления числа 3<sup>2026</sup> + 5<sup>2026</sup> на 8.`, a: ['2'],
+      hints: [`Найди остатки 3<sup>2</sup> и 5<sup>2</sup> при делении на 8.`],
+      sol: `3<sup>2</sup> = 9 ≡ 1 и 5<sup>2</sup> = 25 ≡ 1 (mod 8). Тогда 3<sup>2026</sup> = (3<sup>2</sup>)<sup>1013</sup> ≡ 1 и 5<sup>2026</sup> ≡ 1, сумма ≡ 2.` },
+    { id: 'div-22', lvl: 3, r: 1420, type: 'num', q: `Найдите наибольшее натуральное n, при котором 50! делится на 2<sup>n</sup>.`, a: ['47'],
+      hints: [`Формула Лежандра: показатель простого p в n! равен [n/p] + [n/p<sup>2</sup>] + [n/p<sup>3</sup>] + …`],
+      sol: `[50/2] + [50/4] + [50/8] + [50/16] + [50/32] = 25 + 12 + 6 + 3 + 1 = 47.` },
+    { id: 'div-23', lvl: 3, r: 1450, type: 'num', q: `Найдите остаток от деления 2<sup>2026</sup> на 13.`, a: ['10'],
+      hints: [`По малой теореме Ферма 2<sup>12</sup> ≡ 1 (mod 13).`, `Найди остаток от деления 2026 на 12.`],
+      sol: `2<sup>12</sup> ≡ 1 (mod 13). 2026 = 12 · 168 + 10, поэтому 2<sup>2026</sup> ≡ 2<sup>10</sup> = 1024 = 13 · 78 + 10. Остаток 10.` },
+    { id: 'div-24', lvl: 3, r: 1480, type: 'num', q: `Для скольких натуральных n ≤ 100 число n<sup>2</sup> + 1 делится на 5?`, a: ['40'],
+      hints: [`Остаток n<sup>2</sup> + 1 при делении на 5 зависит только от остатка n.`, `Перебери n ≡ 0, 1, 2, 3, 4 (mod 5).`],
+      sol: `n<sup>2</sup> по модулю 5 равно 0, 1, 4, 4, 1 при n ≡ 0, 1, 2, 3, 4. Значит, n<sup>2</sup> + 1 ≡ 0 только при n ≡ 2 или 3. Среди чисел 1…100 таких 20 + 20 = 40.` },
+    { id: 'div-25', lvl: 3, r: 1500, type: 'num', q: `Сколько существует упорядоченных пар натуральных чисел (x, y), для которых НОД(x, y) = 6 и НОК(x, y) = 180?`, a: ['8'],
+      hints: [`Запиши x = 6a, y = 6b, где НОД(a, b) = 1.`, `Тогда НОК(x, y) = 6ab = 180, то есть ab = 30, а a и b взаимно просты.`],
+      sol: `x = 6a, y = 6b, НОД(a, b) = 1 и ab = 30 = 2 · 3 · 5. Каждое из трёх простых целиком уходит либо в a, либо в b: 2<sup>3</sup> = 8 способов.` },
+    { id: 'div-26', lvl: 3, r: 1530, type: 'num', q: `Найдите наименьшее натуральное n, при котором n! делится на 1000.`, a: ['15'],
+      hints: [`1000 = 2<sup>3</sup> · 5<sup>3</sup>. Пятёрок в n! меньше, чем двоек.`, `При каком наименьшем n в n! впервые набирается три множителя 5?`],
+      sol: `Пятёрки дают множители 5, 10, 15, … Три пятёрки впервые набираются в 15!, а двоек там заведомо больше трёх. В 14! пятёрок только две. Ответ 15.` },
+    { id: 'div-27', lvl: 3, r: 1560, type: 'num', q: `Найдите две последние цифры числа 7<sup>2026</sup>. В ответе запишите двузначное число.`, a: ['49'],
+      hints: [`Две последние цифры — это остаток по модулю 100.`, `Посчитай 7<sup>4</sup>.`],
+      sol: `7<sup>4</sup> = 2401 ≡ 1 (mod 100). 2026 = 4 · 506 + 2, поэтому 7<sup>2026</sup> ≡ 7<sup>2</sup> = 49 (mod 100).` },
+    { id: 'div-28', lvl: 3, r: 1590, type: 'choice', q: `Сколько решений в целых числах имеет уравнение x<sup>2</sup> − y<sup>2</sup> = 2026?`, opts: ['0', '2', '4', 'бесконечно много'], a: 0,
+      hints: [`Какие остатки дают квадраты при делении на 4?`, `Разность двух квадратов по модулю 4 может быть 0, 1 или 3. А 2026?`],
+      sol: `Квадраты дают остатки 0 или 1 по модулю 4, поэтому x<sup>2</sup> − y<sup>2</sup> ≡ 0, 1 или 3. А 2026 ≡ 2 (mod 4). Решений нет. (Другой путь: x − y и x + y одной чётности, поэтому их произведение либо нечётно, либо делится на 4.)` },
+    { id: 'div-29', lvl: 3, r: 1620, type: 'num', q: `Найдите сумму всех натуральных n, при которых число (n<sup>2</sup> + 5)/(n + 1) целое.`, a: ['8'],
+      hints: [`Раздели n<sup>2</sup> + 5 на n + 1 с остатком.`, `n<sup>2</sup> + 5 = (n + 1)(n − 1) + 6.`],
+      sol: `n<sup>2</sup> + 5 = (n + 1)(n − 1) + 6, поэтому дробь целая ⇔ (n + 1) ∣ 6. Так как n + 1 ≥ 2, получаем n + 1 ∈ {2, 3, 6}, то есть n ∈ {1, 2, 5}. Сумма 8.` },
+    { id: 'div-30', lvl: 3, r: 1650, type: 'num', q: `Найдите остаток от деления числа 1 + 2 + 2<sup>2</sup> + … + 2<sup>2026</sup> на 7.`, a: ['3'],
+      hints: [`Сумма степеней двойки: 1 + 2 + … + 2<sup>n</sup> = 2<sup>n+1</sup> − 1.`, `2<sup>3</sup> ≡ 1 (mod 7).`],
+      sol: `Сумма равна 2<sup>2027</sup> − 1. 2027 = 3 · 675 + 2, поэтому 2<sup>2027</sup> ≡ 2<sup>2</sup> = 4, а сумма ≡ 3 (mod 7).` },
+
+    // ── Уровень 4 · Финал (доказательства) ──
+    { id: 'div-31', lvl: 4, r: 1680, type: 'proof', q: `Докажите, что при любом натуральном n число n<sup>3</sup> − n делится на 6.`,
+      hints: [`Разложи n<sup>3</sup> − n на множители.`, `n<sup>3</sup> − n = (n − 1)n(n + 1) — произведение трёх последовательных чисел.`, `Покажи отдельно делимость на 2 и на 3, затем объедини.`],
+      sol: `n<sup>3</sup> − n = (n − 1)n(n + 1). Среди двух последовательных чисел одно чётное, поэтому произведение делится на 2. Среди трёх последовательных чисел одно делится на 3, поэтому произведение делится на 3. Так как 2 и 3 взаимно просты, произведение делится на 6.`,
+      rubric: [[2, `Разложение n<sup>3</sup> − n = (n − 1)n(n + 1)`], [2, `Обоснована делимость на 2`], [2, `Обоснована делимость на 3`], [1, `Вывод: 2 и 3 взаимно просты, поэтому делится на 6`]] },
+    { id: 'div-32', lvl: 4, r: 1700, type: 'proof', q: `Даны 11 целых чисел. Докажите, что среди них найдутся два, разность которых делится на 10.`,
+      hints: [`Разность делится на 10 ⇔ у чисел одинаковые остатки при делении на 10.`, `Сколько всего бывает остатков при делении на 10?`, `Принцип Дирихле: 11 «кроликов» в 10 «клетках».`],
+      sol: `При делении на 10 возможны 10 остатков: 0, 1, …, 9. Чисел 11, поэтому по принципу Дирихле какие-то два числа a и b дают одинаковый остаток. Тогда a − b делится на 10.`,
+      rubric: [[2, `Связь: разность делится на 10 ⇔ остатки одинаковые`], [2, `Подсчитано 10 возможных остатков`], [2, `Применён принцип Дирихле`], [1, `Чёткий вывод`]] },
+    { id: 'div-33', lvl: 4, r: 1730, type: 'proof', q: `Докажите, что квадрат целого числа при делении на 4 даёт остаток 0 или 1. Выведите отсюда, что число вида 4k + 3 нельзя представить в виде суммы двух квадратов целых чисел.`,
+      hints: [`Разбери два случая: n чётное и n нечётное.`, `(2m)<sup>2</sup> = 4m<sup>2</sup>, (2m + 1)<sup>2</sup> = 4m<sup>2</sup> + 4m + 1.`, `Какие остатки может давать сумма двух чисел с остатками 0 или 1?`],
+      sol: `Если n = 2m, то n<sup>2</sup> = 4m<sup>2</sup> ≡ 0 (mod 4). Если n = 2m + 1, то n<sup>2</sup> = 4(m<sup>2</sup> + m) + 1 ≡ 1. Значит, сумма двух квадратов даёт остаток 0 + 0, 0 + 1 или 1 + 1, то есть 0, 1 или 2, но никогда 3. Поэтому число вида 4k + 3 не является суммой двух квадратов.`,
+      rubric: [[3, `Доказано n<sup>2</sup> ≡ 0 или 1 (mod 4), разобраны оба случая`], [3, `Перебраны остатки суммы двух квадратов: 0, 1, 2`], [1, `Вывод про числа вида 4k + 3`]] },
+    { id: 'div-34', lvl: 4, r: 1760, type: 'proof', q: `Докажите, что ни при каком натуральном n число n<sup>2</sup> + n + 1 не делится на 5.`,
+      hints: [`Остаток n<sup>2</sup> + n + 1 при делении на 5 зависит только от остатка n.`, `Перебери пять случаев: n ≡ 0, 1, 2, 3, 4 (mod 5).`],
+      sol: `Переберём остатки n по модулю 5. n ≡ 0: остаток 1. n ≡ 1: 3. n ≡ 2: 4 + 2 + 1 = 7 ≡ 2. n ≡ 3: 9 + 3 + 1 = 13 ≡ 3. n ≡ 4: 16 + 4 + 1 = 21 ≡ 1. Остаток 0 не встречается, поэтому n<sup>2</sup> + n + 1 никогда не делится на 5.`,
+      rubric: [[2, `Идея: достаточно перебрать остатки n по модулю 5`], [4, `Верно разобраны все пять случаев`], [1, `Вывод`]] },
+    { id: 'div-35', lvl: 4, r: 1800, type: 'proof', q: `Докажите, что дробь (21n + 4)/(14n + 3) несократима ни при каком натуральном n.`,
+      note: `Это задача № 1 самой первой Международной математической олимпиады, 1959 год.`,
+      hints: [`Пусть d — общий делитель числителя и знаменателя. Что ещё делится на d?`, `Подбери такую комбинацию x(21n + 4) − y(14n + 3), чтобы n исчезло.`, `3(14n + 3) − 2(21n + 4) = 1.`],
+      sol: `Пусть d делит 21n + 4 и 14n + 3. Тогда d делит 3(14n + 3) − 2(21n + 4) = 42n + 9 − 42n − 8 = 1. Значит, d = 1 и дробь несократима. Можно и алгоритмом Евклида: НОД(21n + 4, 14n + 3) = НОД(7n + 1, 14n + 3) = НОД(7n + 1, 1) = 1.`,
+      rubric: [[2, `Введён общий делитель d или применён алгоритм Евклида`], [3, `Найдена комбинация, равная 1, вычисление верное`], [2, `Вывод d = 1`]] },
+    { id: 'div-36', lvl: 4, r: 1850, type: 'proof', q: `Докажите, что если p — простое число и p > 3, то p<sup>2</sup> − 1 делится на 24.`,
+      hints: [`p<sup>2</sup> − 1 = (p − 1)(p + 1).`, `p нечётно, поэтому p − 1 и p + 1 — два последовательных чётных числа, и одно из них делится на 4.`, `Среди p − 1, p, p + 1 одно делится на 3, и это не p.`],
+      sol: `p<sup>2</sup> − 1 = (p − 1)(p + 1). Простое p > 3 нечётно, поэтому p − 1 и p + 1 — последовательные чётные числа: одно из них делится на 4, и произведение делится на 2 · 4 = 8. Среди трёх последовательных чисел p − 1, p, p + 1 одно делится на 3, и это не p, так как p простое и больше 3. Значит, произведение делится на 3. Числа 8 и 3 взаимно просты, поэтому p<sup>2</sup> − 1 делится на 24.`,
+      rubric: [[1, `Разложение (p − 1)(p + 1)`], [3, `Обоснована делимость на 8: два последовательных чётных, одно кратно 4`], [2, `Обоснована делимость на 3`], [1, `Вывод: 8 и 3 взаимно просты`]] },
+    { id: 'div-37', lvl: 4, r: 1900, type: 'proof', q: `Найдите все натуральные n, при которых 2<sup>n</sup> + 1 делится на 3, и докажите, что других нет.`,
+      hints: [`2 ≡ −1 (mod 3).`, `Тогда 2<sup>n</sup> + 1 ≡ (−1)<sup>n</sup> + 1 (mod 3).`],
+      sol: `Ответ: все нечётные n. Так как 2 ≡ −1 (mod 3), имеем 2<sup>n</sup> + 1 ≡ (−1)<sup>n</sup> + 1. При нечётном n это −1 + 1 = 0, то есть делится на 3. При чётном n это 1 + 1 = 2 — не делится.`,
+      rubric: [[2, `Замечено 2 ≡ −1 (mod 3) или найден период остатков`], [2, `Верно посчитан остаток 2<sup>n</sup> + 1`], [2, `Разобраны оба случая: нечётные подходят, чётные нет`], [1, `Записан ответ`]] },
+    { id: 'div-38', lvl: 4, r: 1950, type: 'proof', q: `Докажите, что при любом натуральном n число 4<sup>n</sup> + 15n − 1 делится на 9.`,
+      hints: [`Способ 1 — индукция: проверь n = 1 и найди связь между соседними членами.`, `Способ 2: 4<sup>n</sup> = (1 + 3)<sup>n</sup>. Раскрой по биному Ньютона: все слагаемые, начиная с третьего, делятся на 9.`, `(1 + 3)<sup>n</sup> ≡ 1 + 3n (mod 9).`],
+      sol: `Через бином: 4<sup>n</sup> = (1 + 3)<sup>n</sup> = 1 + 3n + C(n, 2) · 9 + …, все слагаемые после второго содержат 3<sup>2</sup> = 9. Значит, 4<sup>n</sup> ≡ 1 + 3n (mod 9), и 4<sup>n</sup> + 15n − 1 ≡ 1 + 3n + 15n − 1 = 18n ≡ 0 (mod 9).<br><br>Через индукцию: при n = 1 получаем 18. Обозначим a<sub>n</sub> = 4<sup>n</sup> + 15n − 1. Тогда a<sub>n+1</sub> = 4 · 4<sup>n</sup> + 15n + 14 = 4a<sub>n</sub> − 45n + 18, и если 9 ∣ a<sub>n</sub>, то 9 ∣ a<sub>n+1</sub>.`,
+      rubric: [[1, `Проверен случай n = 1 или выбран способ через бином`], [4, `Главный шаг: переход индукции или (1 + 3)<sup>n</sup> ≡ 1 + 3n (mod 9)`], [2, `Аккуратный вывод для всех n`]] },
+
+    // ── Уровень 5 · Международный ──
+    { id: 'div-39', lvl: 5, r: 2050, type: 'proof', q: `Докажите, что уравнение x<sup>2</sup> + y<sup>2</sup> = 3z<sup>2</sup> не имеет решений в натуральных числах.`,
+      hints: [`Посмотри на уравнение по модулю 3: какие остатки дают квадраты?`, `x<sup>2</sup> + y<sup>2</sup> делится на 3 только тогда, когда x и y оба делятся на 3.`, `Подставь x = 3a, y = 3b и получи решение меньше исходного. Это метод бесконечного спуска.`],
+      sol: `Квадраты дают остатки 0 или 1 по модулю 3. Правая часть делится на 3, поэтому x<sup>2</sup> + y<sup>2</sup> ≡ 0, что возможно только при x ≡ y ≡ 0 (mod 3). Пусть x = 3a, y = 3b. Тогда 9(a<sup>2</sup> + b<sup>2</sup>) = 3z<sup>2</sup>, то есть z<sup>2</sup> = 3(a<sup>2</sup> + b<sup>2</sup>), и z тоже делится на 3: z = 3c, a<sup>2</sup> + b<sup>2</sup> = 3c<sup>2</sup>. Получилось новое решение (x/3, y/3, z/3) в натуральных числах, меньшее исходного. Если взять решение с наименьшим z, получаем противоречие. Значит, решений нет.`,
+      rubric: [[2, `Уравнение рассмотрено по модулю 3, квадраты ≡ 0 или 1`], [2, `Доказано, что x и y делятся на 3`], [2, `Показано, что z делится на 3, и получено меньшее решение`], [1, `Корректно завершён спуск: минимальное решение или бесконечное убывание`]] },
+    { id: 'div-40', lvl: 5, r: 2150, type: 'proof', q: `Докажите, что простых чисел вида 4k + 3 бесконечно много.`,
+      hints: [`Предположи, что их конечное число: p<sub>1</sub>, p<sub>2</sub>, …, p<sub>k</sub>.`, `Рассмотри N = 4p<sub>1</sub>p<sub>2</sub>…p<sub>k</sub> − 1. Какой у него остаток при делении на 4?`, `Произведение чисел вида 4k + 1 тоже имеет вид 4k + 1. Значит, у N есть простой делитель вида 4k + 3.`],
+      sol: `Пусть таких простых конечное число: p<sub>1</sub>, …, p<sub>k</sub>. Рассмотрим N = 4p<sub>1</sub>p<sub>2</sub>…p<sub>k</sub> − 1. Оно нечётно и N ≡ 3 (mod 4). Все простые делители N нечётны, то есть имеют вид 4k + 1 или 4k + 3. Если бы все они были вида 4k + 1, то и N, их произведение, было бы вида 4k + 1. Значит, у N есть простой делитель q вида 4k + 3. Но q не совпадает ни с одним p<sub>i</sub>: иначе q делит и 4p<sub>1</sub>…p<sub>k</sub>, и N, а значит делит 1. Противоречие.`,
+      rubric: [[1, `Предположение о конечности и выбор числа N = 4p<sub>1</sub>…p<sub>k</sub> − 1 или аналогичного`], [2, `Показано N ≡ 3 (mod 4)`], [2, `Доказано, что у N есть простой делитель вида 4k + 3`], [2, `Доказано, что он не совпадает ни с одним p<sub>i</sub>`]] },
+    { id: 'div-41', lvl: 5, r: 2250, type: 'proof', q: `Докажите, что при любом натуральном n > 1 число n<sup>4</sup> + 4<sup>n</sup> составное.`,
+      hints: [`Рассмотри отдельно чётные и нечётные n.`, `Для нечётного n = 2m + 1 запиши 4<sup>n</sup> = 4 · (2<sup>m</sup>)<sup>4</sup>.`, `Тождество Софи Жермен: a<sup>4</sup> + 4b<sup>4</sup> = (a<sup>2</sup> + 2b<sup>2</sup> + 2ab)(a<sup>2</sup> + 2b<sup>2</sup> − 2ab).`],
+      sol: `Если n чётно, то n<sup>4</sup> + 4<sup>n</sup> чётно и больше 2, значит составное. Пусть n нечётно: n = 2m + 1, m ≥ 1. Тогда 4<sup>n</sup> = 4 · 4<sup>2m</sup> = 4 · (2<sup>m</sup>)<sup>4</sup>. По тождеству Софи Жермен с a = n, b = 2<sup>m</sup>: n<sup>4</sup> + 4b<sup>4</sup> = (n<sup>2</sup> + 2b<sup>2</sup> + 2nb)(n<sup>2</sup> + 2b<sup>2</sup> − 2nb). Второй множитель равен (n − b)<sup>2</sup> + b<sup>2</sup> ≥ b<sup>2</sup> = 4<sup>m</sup> ≥ 4, первый ещё больше. Число раскладывается на два множителя, больших 1, значит оно составное.`,
+      rubric: [[1, `Разобран случай чётного n`], [2, `Для нечётного n записано 4<sup>n</sup> = 4b<sup>4</sup>`], [2, `Применено тождество Софи Жермен или найдено разложение`], [2, `Доказано, что оба множителя больше 1`]] },
+    { id: 'div-42', lvl: 5, r: 2350, type: 'proof', q: `Докажите, что при натуральном n > 1 число 2<sup>n</sup> − 1 не делится на n.`,
+      hints: [`Если n чётно, всё просто: 2<sup>n</sup> − 1 нечётно.`, `Пусть n нечётно и p — наименьший простой делитель n. Тогда 2<sup>n</sup> ≡ 1 (mod p). Что даёт малая теорема Ферма?`, `Пусть d — порядок двойки по модулю p. Тогда d делит и n, и p − 1. Почему d = 1 и где противоречие?`],
+      sol: `Если n чётно, то 2<sup>n</sup> − 1 нечётно и не делится на n. Пусть n нечётно, n > 1, и предположим, что n ∣ 2<sup>n</sup> − 1. Возьмём наименьший простой делитель p числа n, p ≥ 3. Тогда 2<sup>n</sup> ≡ 1 (mod p), а по малой теореме Ферма 2<sup>p−1</sup> ≡ 1 (mod p). Пусть d — порядок двойки по модулю p. Порядок делит любой показатель k с 2<sup>k</sup> ≡ 1, поэтому d ∣ n и d ∣ p − 1. Все простые делители n не меньше p, а все простые делители p − 1 меньше p, поэтому НОД(n, p − 1) = 1 и d = 1. Тогда 2 ≡ 1 (mod p), то есть p ∣ 1 — противоречие.`,
+      rubric: [[1, `Разобран случай чётного n`], [2, `Выбран наименьший простой делитель p и получено 2<sup>n</sup> ≡ 1 (mod p)`], [2, `Применены теорема Ферма и порядок: d ∣ n и d ∣ p − 1`], [2, `Доказано НОД(n, p − 1) = 1 и получено противоречие`]] }
+  ]
+});
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var MM = window.MM;
+  var KEY = 'mit-mission-v1';
+  var SEC = { nt: 'Теория чисел', alg: 'Алгебра', geo: 'Геометрия', comb: 'Комбинаторика', mock: 'Пробные олимпиады' };
+  var LV = { 1: ['База', 'школьный уровень · тест'], 2: ['Районный этап', 'тест'], 3: ['Полуфинал', 'тест'], 4: ['Финал', 'доказательства'], 5: ['Международный', 'доказательства'] };
+  var STAGES = [
+    { r: 1100, name: 'Школьная база', short: 'База' },
+    { r: 1350, name: 'Районный этап', short: 'Район' },
+    { r: 1650, name: 'Полуфинал', short: 'Полуфинал' },
+    { r: 1850, name: 'Финал RFO', short: 'Финал' },
+    { r: 2050, name: 'Золото RFO', short: 'Золото', goal: true },
+    { r: 2300, name: 'Международный уровень', short: 'Мир' }
+  ];
+  var SCALE = [800, 2400];
+  var EVENTS = [
+    { d: new Date(2027, 10, 1), name: 'Регистрация на RFO', note: 'ноябрь 2027, на portal.edu.az' },
+    { d: new Date(2027, 11, 1), name: 'Районный этап', note: 'декабрь 2027 — январь 2028' },
+    { d: new Date(2028, 3, 9), name: 'Финал RFO', note: 'ориентир: второе воскресенье апреля 2028' }
+  ];
+  var WEEK_GOAL = 300;
+  var HINT_COST = 0.2;
+  var MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+  var KEYS = ['√', '²', '³', 'ⁿ', '·', '±', '≤', '≥', '≠', '≡', '∣', '∤', '⇒', '⇔', '∈', 'ℕ', 'ℤ', '∀', '∃', '∠', '△', '°', 'π', '∞', '⌊', '⌋', '₁', '₂', 'ₖ', 'ₙ'];
+  var REPL = [['<=', '≤'], ['>=', '≥'], ['!=', '≠'], ['=>', '⇒'], ['sqrt', '√'], ['^2', '²'], ['^3', '³'], ['^n', 'ⁿ']];
+
+  // ---------- index ----------
+  var P = {}, T = {}, ALL = [];
+  MM.topics.forEach(function (t) {
+    T[t.id] = t;
+    t.problems.forEach(function (p, i) { p.topic = t.id; p.idx = i; P[p.id] = p; ALL.push(p); });
+  });
+  var DIAG = MM.diag ? MM.diag.problems : [];
+
+  // ---------- storage ----------
+  var storageOK = true;
+  function fresh() {
+    return { v: 1, rating: null, peak: null, n: 0, hist: [], att: {}, rev: {}, time: {}, days: {}, daily: {}, weekly: {}, diag: null, diagRun: null, teacher: {}, drafts: {}, read: {} };
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return fresh();
+      return Object.assign(fresh(), JSON.parse(raw));
+    } catch (e) { storageOK = false; return fresh(); }
+  }
+  var S = load();
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(S)); storageOK = true; } catch (e) { storageOK = false; }
+  }
+
+  // ---------- helpers ----------
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function today() { return ymd(new Date()); }
+  function addDays(s, k) { var p = s.split('-').map(Number); return ymd(new Date(p[0], p[1] - 1, p[2] + k)); }
+  function weekKey() { var x = new Date(); x = new Date(x.getFullYear(), x.getMonth(), x.getDate()); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return ymd(x); }
+  function daysTo(date) { var t = new Date(); var a = new Date(t.getFullYear(), t.getMonth(), t.getDate()); return Math.round((date - a) / 86400000); }
+  function fmtDate(d) { return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
+  function fmtShort(ts) { var d = new Date(ts); return d.getDate() + ' ' + MONTHS[d.getMonth()]; }
+  function plural(n, a, b, c) { var m10 = n % 10, m100 = n % 100; if (m10 === 1 && m100 !== 11) return a; if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return b; return c; }
+  function sign(d) { return d > 0 ? '+' + d : d < 0 ? '−' + Math.abs(d) : '±0'; }
+  function deltaCls(d) { return d > 0 ? 'up' : d < 0 ? 'down' : 'zero'; }
+  function hash32(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function mins(sec) { var m = Math.round(sec / 60); return m < 60 ? m + ' мин' : Math.floor(m / 60) + ' ч ' + (m % 60) + ' мин'; }
+  function pct(r) { return Math.max(0, Math.min(100, (r - SCALE[0]) / (SCALE[1] - SCALE[0]) * 100)); }
+
+  // ---------- rating ----------
+  function expected(R, Pr) { return 1 / (1 + Math.pow(10, (Pr - R) / 400)); }
+  function applyRating(p, s, w) {
+    var R = S.rating == null ? 1000 : S.rating;
+    var k = (S.n < 20 ? 48 : S.n < 60 ? 32 : 24) * w;
+    var d = Math.round(k * (s - expected(R, p.r)));
+    if (d === 0 && s >= 0.5) d = 1;
+    S.rating = Math.max(100, R + d);
+    S.n++;
+    S.peak = Math.max(S.peak || 0, S.rating);
+    S.hist.push([Date.now(), S.rating]);
+    if (S.hist.length > 500) S.hist.splice(0, S.hist.length - 500);
+    return d;
+  }
+  function stageNext(r) { for (var i = 0; i < STAGES.length; i++) if (STAGES[i].r > r) return STAGES[i]; return null; }
+  function delta7() {
+    if (!S.hist.length) return 0;
+    var cut = Date.now() - 7 * 86400000, base = S.hist[0][1];
+    for (var i = 0; i < S.hist.length; i++) { if (S.hist[i][0] <= cut) base = S.hist[i][1]; else break; }
+    return S.rating - base;
+  }
+
+  // ---------- progress ----------
+  var RANK = { bad: 0, ok: 1, clean: 2 };
+  function status(id) { var a = S.att[id]; return a ? a.st : 'new'; }
+  function isDue(id) { var r = S.rev[id]; return !!(r && r.due <= today() && S.att[id]); }
+  function dueList() { return Object.keys(S.rev).filter(isDue).filter(function (id) { return P[id]; }); }
+  function mastery(ps) {
+    if (!ps.length) return 0;
+    var v = 0; ps.forEach(function (p) { var s = status(p.id); v += s === 'clean' ? 1 : s === 'ok' ? 0.6 : 0; });
+    return v / ps.length;
+  }
+  function solvedIn(ps) { return ps.filter(function (p) { var s = status(p.id); return s === 'clean' || s === 'ok'; }).length; }
+  function recommend(t) {
+    for (var L = 1; L <= 5; L++) {
+      var ps = t.problems.filter(function (p) { return p.lvl === L; });
+      if (mastery(ps) < 0.7) {
+        var c = ps.filter(function (p) { return status(p.id) === 'new'; })[0] || ps.filter(function (p) { return status(p.id) === 'bad' && !S.rev[p.id]; })[0];
+        if (c) return c;
+      }
+    }
+    return t.problems.filter(function (p) { return status(p.id) === 'new'; })[0] || null;
+  }
+  function nextStep(t) {
+    var unread = t.lessons.filter(function (l) { return !S.read[l.id]; });
+    var read = t.lessons.length - unread.length;
+    var p = recommend(t);
+    if (unread.length && (read < 2 || !p || (p.lvl >= 3 && read < t.lessons.length))) {
+      return { href: '#l-' + unread[0].id, label: 'Читать: ' + unread[0].title, kind: 'lesson', lesson: unread[0] };
+    }
+    if (p) return { href: '#p-' + p.id, label: 'Задача ' + (p.idx + 1) + ' · ' + LV[p.lvl][0], kind: 'problem', p: p };
+    return { href: '#t-' + t.id, label: 'Тема пройдена — повтори трудные задачи', kind: 'done' };
+  }
+  function markDay() { var k = today(); S.days[k] = (S.days[k] || 0) + 1; }
+  function streak() { var d = today(); if (!S.days[d]) d = addDays(d, -1); var n = 0; while (S.days[d]) { n++; d = addDays(d, -1); } return n; }
+  function weekSec() { var s = 0, d = today(); for (var i = 0; i < 7; i++) { s += S.time[d] || 0; d = addDays(d, -1); } return s; }
+  function reviewStep(id, good) {
+    var r = S.rev[id]; if (!r) return;
+    if (!good) { r.step = 0; r.due = addDays(today(), 1); return; }
+    r.step++;
+    if (r.step >= 3) delete S.rev[id]; else r.due = addDays(today(), [1, 3, 7][r.step]);
+  }
+
+  // ---------- daily / weekly ----------
+  function dailyId() {
+    var k = today();
+    if (S.daily[k] && P[S.daily[k].id]) return S.daily[k].id;
+    var R = S.rating == null ? 1000 : S.rating;
+    var tests = ALL.filter(function (p) { return p.type !== 'proof'; });
+    var pool = tests.filter(function (p) { return !S.att[p.id]; });
+    if (!pool.length) pool = tests.filter(function (p) { return status(p.id) !== 'clean'; });
+    if (!pool.length) pool = tests;
+    pool = pool.slice().sort(function (a, b) { return Math.abs(a.r - R - 60) - Math.abs(b.r - R - 60); }).slice(0, 3);
+    var id = pool[hash32(k) % pool.length].id;
+    S.daily[k] = { id: id, done: false };
+    save();
+    return id;
+  }
+  function weeklyId() {
+    var k = weekKey();
+    if (S.weekly[k] && P[S.weekly[k].id]) return S.weekly[k].id;
+    var R = S.rating == null ? 1000 : S.rating;
+    var proofs = ALL.filter(function (p) { return p.type === 'proof'; });
+    var pool = proofs.filter(function (p) { return status(p.id) !== 'clean'; });
+    if (!pool.length) pool = proofs;
+    pool = pool.slice().sort(function (a, b) { return Math.abs(a.r - R - 250) - Math.abs(b.r - R - 250); });
+    var id = pool[0].id;
+    S.weekly[k] = { id: id, done: false };
+    save();
+    return id;
+  }
+  function noteSolved(id, good) {
+    var dk = today(), wk = weekKey();
+    if (good && S.daily[dk] && S.daily[dk].id === id) S.daily[dk].done = true;
+    if (good && S.weekly[wk] && S.weekly[wk].id === id) S.weekly[wk].done = true;
+  }
+
+  // ---------- answering ----------
+  var cur = null;
+  function newCur(id) { return { id: id, hints: 0, t0: Date.now(), phase: 'solve', result: null, picked: null, showSol: false, reviewDone: false, rub: {}, other: false, none: false }; }
+  function norm(v) { return String(v).trim().replace(/\s+/g, '').replace(',', '.').replace(/−/g, '-').replace(/^\+/, ''); }
+  function checkNum(p, v) {
+    var x = norm(v); if (!x) return null;
+    return p.a.some(function (a) { var y = norm(a); return x === y || (!isNaN(Number(x)) && !isNaN(Number(y)) && Number(x) === Number(y)); });
+  }
+  function hintFactor() { return Math.max(0.2, 1 - HINT_COST * cur.hints); }
+  function answerTest(id, ok, picked) {
+    var p = P[id], a = S.att[id], d = null;
+    if (!a) {
+      var s = ok ? hintFactor() : 0;
+      d = applyRating(p, s, 1);
+      S.att[id] = { st: ok ? (cur.hints ? 'ok' : 'clean') : 'bad', s: s, d: d, h: cur.hints, at: Date.now(), tries: 1, sec: Math.round((Date.now() - cur.t0) / 1000) };
+      if (!ok || cur.hints >= 2) S.rev[id] = { due: addDays(today(), 1), step: 0 };
+    } else if (isDue(id) && !cur.reviewDone) {
+      d = applyRating(p, ok ? hintFactor() : 0, 0.5);
+      reviewStep(id, ok && !cur.hints);
+      cur.reviewDone = true;
+      a.tries++; if (ok && a.st === 'bad') a.st = 'ok';
+    } else {
+      a.tries++; if (ok && a.st === 'bad') a.st = 'ok';
+    }
+    markDay(); noteSolved(id, ok);
+    cur.result = { ok: ok, d: d, sec: Math.round((Date.now() - cur.t0) / 1000) };
+    cur.picked = picked;
+    cur.phase = ok ? 'done' : 'wrong';
+    if (ok) cur.showSol = true;
+    save(); render();
+    var f = document.getElementById('after'); if (f) f.focus();
+  }
+  function giveUp(id) {
+    var p = P[id];
+    if (!S.att[id]) {
+      var d = applyRating(p, 0, 0.5);
+      S.att[id] = { st: 'bad', s: 0, d: d, h: cur.hints, at: Date.now(), tries: 0, seen: true };
+      S.rev[id] = { due: addDays(today(), 1), step: 0 };
+      cur.result = { ok: false, d: d, gaveUp: true };
+      markDay();
+    }
+    cur.showSol = true; cur.phase = cur.phase === 'solve' ? 'seen' : cur.phase;
+    save(); render();
+  }
+  function gradeProof(id, pts) {
+    var p = P[id], a = S.att[id], d = null;
+    var s = pts / 7 * hintFactor();
+    var st = pts === 7 && !cur.hints ? 'clean' : pts >= 4 ? 'ok' : 'bad';
+    if (!a) {
+      d = applyRating(p, s, 1);
+      S.att[id] = { st: st, s: s, d: d, h: cur.hints, at: Date.now(), tries: 1, pts: pts };
+      if (st !== 'clean') S.rev[id] = { due: addDays(today(), 3), step: 0 };
+    } else if (isDue(id) && !cur.reviewDone) {
+      d = applyRating(p, s, 0.5);
+      reviewStep(id, pts >= 6 && !cur.hints);
+      cur.reviewDone = true;
+      a.tries++; if (RANK[st] > RANK[a.st]) a.st = st; a.pts = Math.max(a.pts || 0, pts);
+    } else {
+      a.tries++; if (RANK[st] > RANK[a.st]) a.st = st; a.pts = Math.max(a.pts || 0, pts);
+    }
+    markDay(); noteSolved(id, pts >= 4);
+    cur.result = { pts: pts, d: d };
+    cur.phase = 'graded';
+    save(); render();
+    var f = document.getElementById('after'); if (f) f.focus();
+  }
+
+  // ---------- diagnostic ----------
+  function perfRating(items) {
+    var score = items.reduce(function (s, x) { return s + (x.ok ? 1 : 0); }, 0);
+    var rs = items.map(function (x) { return x.r; });
+    if (score === 0) return Math.max(600, Math.min.apply(null, rs) - 150);
+    if (score === items.length) return Math.min(1700, Math.max.apply(null, rs) + 150);
+    var lo = 300, hi = 2700;
+    for (var it = 0; it < 50; it++) {
+      var mid = (lo + hi) / 2, e = 0;
+      items.forEach(function (x) { e += expected(mid, x.r); });
+      if (e < score) lo = mid; else hi = mid;
+    }
+    return Math.round(Math.max(600, Math.min(1700, (lo + hi) / 2)) / 5) * 5;
+  }
+  function diagFinish() {
+    var run = S.diagRun, items = [], bySec = {};
+    DIAG.forEach(function (p) {
+      var v = run.ans[p.id], ok = false;
+      if (v != null) ok = p.type === 'choice' ? v === p.a : !!checkNum(p, v);
+      items.push({ id: p.id, ok: ok, r: p.r });
+      bySec[p.sec] = bySec[p.sec] || [0, 0];
+      bySec[p.sec][1]++; if (ok) bySec[p.sec][0]++;
+    });
+    var perf = perfRating(items);
+    var res = { ts: Date.now(), perf: perf, bySec: bySec, ok: {}, ans: run.ans, applied: false };
+    items.forEach(function (x) { res.ok[x.id] = x.ok; });
+    if (S.n === 0) {
+      S.rating = perf; S.peak = Math.max(S.peak || 0, perf); S.hist = [[Date.now(), perf]]; res.applied = true;
+    }
+    S.diag = res; S.diagRun = null; markDay();
+    save();
+  }
+
+  // ---------- routing ----------
+  var route = { view: 'today' };
+  function parseRoute() {
+    var h = (location.hash || '').replace('#', '');
+    if (h.indexOf('p-') === 0) return { view: 'problem', id: h.slice(2) };
+    if (h.indexOf('t-') === 0) return { view: 'topic', id: h.slice(2) };
+    if (h.indexOf('l-') === 0) return { view: 'lesson', id: h.slice(2) };
+    if (h === 'map' || h === 'me' || h === 'diag') return { view: h };
+    return { view: 'today' };
+  }
+
+  // ---------- pieces ----------
+  function header() {
+    var v = route.view, r = S.rating;
+    function nl(h, name, views) { return '<a href="#' + h + '"' + (views.indexOf(v) >= 0 ? ' aria-current="page"' : '') + '>' + name + '</a>'; }
+    return '<header class="top"><div class="top-in">' +
+      '<a class="brand" href="#today"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">MIT mission</span><span class="brand-sub">математика</span></a>' +
+      '<nav class="nav" aria-label="Разделы">' + nl('today', 'Сегодня', ['today']) + nl('map', 'Темы', ['map', 'topic', 'lesson', 'problem']) + nl('me', 'Профиль', ['me']) + '</nav>' +
+      '<a class="rchip" href="#me" title="Твой рейтинг">' + (r == null ? '—' : r) + '</a>' +
+      '</div></header>';
+  }
+  function footer() {
+    return '<footer class="foot">' +
+      (storageOK ? '' : '<p class="warn">Браузер не даёт сохранять данные (например, в режиме инкогнито). Прогресс пропадёт после закрытия страницы.</p>') +
+      '<p>MIT mission — личный неофициальный проект подготовки к олимпиаде. Не связан с Массачусетским технологическим институтом. Задачи и уроки составлены по официальной программе Республиканской олимпиады по математике. Прогресс хранится только в этом браузере — перенести его на другое устройство можно в профиле.</p></footer>';
+  }
+  function ladder(r) {
+    var ticks = STAGES.map(function (s, i) {
+      var cls = 'tick ' + (i % 2 ? 'down' : 'up') + (s.goal ? ' goal' : '') + (r != null && r >= s.r ? ' passed' : '');
+      return '<span class="' + cls + '" style="left:' + pct(s.r) + '%"><span class="tick-l">' + s.short + '<b>' + s.r + '</b></span></span>';
+    }).join('');
+    var you = r == null ? '' : '<span class="you" style="left:' + pct(r) + '%" aria-hidden="true"></span>';
+    var fill = r == null ? '' : '<span class="ladder-fill" style="width:' + pct(r) + '%"></span>';
+    var label = r == null ? 'Шкала этапов: от школьной базы до международного уровня' : 'Рейтинг ' + r + '. Цель — золото RFO, ' + STAGES[4].r;
+    return '<div class="ladder" role="img" aria-label="' + label + '"><div class="ladder-track">' + fill + ticks + you + '</div></div>';
+  }
+  function countdown() {
+    var items = EVENTS.map(function (e) {
+      var n = daysTo(e.d);
+      return '<li><span class="ev-n">' + e.name + '</span><span class="ev-d">' + (n >= 0 ? n + ' ' + plural(n, 'день', 'дня', 'дней') : 'прошло') + '</span><span class="ev-note">' + e.note + '</span></li>';
+    }).join('');
+    return '<section class="panel"><div class="lab">Олимпиада 10 класса · сезон 2027/28</div><ul class="ev">' + items + '</ul></section>';
+  }
+  function probLabel(p) { var t = T[p.topic]; return t.title + ' · ' + LV[p.lvl][0]; }
+  function statusPill(id) {
+    var s = status(id);
+    if (s === 'clean') return '<span class="pill good">решена ✓</span>';
+    if (s === 'ok') return '<span class="pill good">решена</span>';
+    if (s === 'bad') return '<span class="pill bad">не решена</span>';
+    return '';
+  }
+  function probCard(lab, p, extra, featured) {
+    return '<a class="card' + (featured ? ' featured' : '') + '" href="#p-' + p.id + '"><div class="lab">' + lab + '</div>' +
+      '<div class="card-title">' + probLabel(p) + '</div><div class="card-q">' + p.q + '</div>' +
+      '<div class="card-meta"><span class="pill num">' + p.r + '</span><span>' + (p.type === 'proof' ? 'доказательство' : 'тест') + '</span>' + (extra || '') + '</div></a>';
+  }
+
+  // ---------- views ----------
+  function vWelcome() {
+    return '<section class="welcome"><div class="lab">MIT mission · математика</div><h1>Путь к золоту RFO</h1>' +
+      '<p class="lead">Тренажёр олимпиадной математики по официальной программе Республиканской олимпиады. Рейтинг здесь как в шахматах: решаешь задачи — он растёт, а шкала показывает, сколько осталось до каждого этапа.</p>' +
+      '<div class="actions"><a class="btn" href="#diag">Пройти диагностику</a><a class="btn ghost" href="#map">Сначала посмотреть темы</a></div>' +
+      '<ol class="steps"><li><b>Диагностика.</b> 17 задач по четырём разделам, около 40 минут, без подсказок. Даёт стартовый рейтинг.</li>' +
+      '<li><b>Темы.</b> Теория простыми словами и задачи пяти уровней: от школьной базы до международных олимпиад.</li>' +
+      '<li><b>Каждый день.</b> Задача дня, раз в неделю — задача на доказательство, а ошибки возвращаются на повторение.</li></ol></section>' +
+      ladder(null) + countdown();
+  }
+  function vToday() {
+    var r = S.rating;
+    if (r == null) return vWelcome();
+    var d7 = delta7(), nx = stageNext(r);
+    var dId = dailyId(), wId = weeklyId();
+    var dp = P[dId], wp = P[wId];
+    var dDone = S.daily[today()] && S.daily[today()].done, wDone = S.weekly[weekKey()] && S.weekly[weekKey()].done;
+    var due = dueList();
+    var t = T[MM.topics[0].id], ns = nextStep(t);
+    var ws = weekSec(), st = streak();
+
+    var hero = '<section class="hero"><div class="hero-main"><div class="lab">Рейтинг</div>' +
+      '<div class="rating-big">' + r + '</div>' +
+      '<div class="hero-sub"><span class="delta ' + deltaCls(d7) + '">' + sign(d7) + '</span> за 7 дней · пик ' + S.peak + ' · ' + S.n + ' ' + plural(S.n, 'задача', 'задачи', 'задач') + ' в рейтинге</div>' +
+      '<div class="next">' + (nx ? 'До уровня «' + nx.name + '» осталось <b>' + (nx.r - r) + '</b>' : 'Ты выше всей шкалы. Пора на международные олимпиады.') + '</div></div>' +
+      '<div class="chart" data-chart="small"></div></section>';
+
+    var cards = '<section class="grid4">' +
+      probCard('Задача дня', dp, dDone ? '<span class="pill good">решена ✓</span>' : '', !dDone) +
+      probCard('Задача недели', wp, wDone ? '<span class="pill good">сдана ✓</span>' : '<span class="pill gold">доказательство</span>', false) +
+      (due.length ? '<a class="card" href="#p-' + due[0] + '"><div class="lab">Повторение</div><div class="card-title">' + due.length + ' ' + plural(due.length, 'задача ждёт', 'задачи ждут', 'задач ждут') + ' повторения</div><div class="card-q">Задачи, где были ошибки, возвращаются через 1, 3 и 7 дней. Так решение запоминается надолго.</div><div class="card-meta"><span class="pill bad">сегодня</span></div></a>'
+        : '<div class="card"><div class="lab">Повторение</div><div class="card-title">На сегодня всё повторено</div><div class="card-q">Задачи с ошибками вернутся сюда через 1, 3 и 7 дней.</div></div>') +
+      '<a class="card" href="' + ns.href + '"><div class="lab">Продолжить</div><div class="card-title">' + t.title + '</div><div class="card-q">' + esc(ns.label) + '</div><div class="card-meta"><span>' + Math.round(mastery(t.problems) * 100) + '% темы</span></div></a>' +
+      '</section>';
+
+    var week = '<section class="panel"><div class="lab">Эта неделя</div>' +
+      '<div class="stat-row" style="margin-top:10px"><span>Время на математику</span><b>' + mins(ws) + '</b></div>' +
+      '<div class="bar goldbar" role="img" aria-label="' + Math.round(ws / 60) + ' из ' + WEEK_GOAL + ' минут"><i style="width:' + Math.min(100, ws / 60 / WEEK_GOAL * 100) + '%"></i></div>' +
+      '<p class="small" style="margin:6px 0 14px">Цель — 5 часов в неделю. Время считается, пока открыта задача или урок.</p>' +
+      '<div class="stat-row"><span>Дней подряд</span><b>' + st + '</b></div>' +
+      '<div class="stat-row"><span>Решено сегодня</span><b>' + (S.days[today()] || 0) + '</b></div></section>';
+
+    return hero + ladder(r) + cards + '<div class="row2">' + week + countdown() + '</div>';
+  }
+  function topicRow(t) {
+    var solved = solvedIn(t.problems);
+    return '<li><a class="mitem" href="#t-' + t.id + '"><span class="mt">' + t.title + '</span><span class="mprog"><span class="bar"><i style="width:' + (solved / t.problems.length * 100) + '%"></i></span>' + solved + '/' + t.problems.length + '</span></a></li>';
+  }
+  function vMap() {
+    return '<div><h1 class="pg">Темы</h1><p class="pg-sub">По официальной программе Республиканской олимпиады по математике. Сейчас готова первая тема, остальные будут появляться здесь по очереди.</p></div>' +
+      MM.roadmap.map(function (sec) {
+        return '<section class="msec"><h2>' + sec.title + '</h2><ul class="mlist">' + sec.items.map(function (it) {
+          if (it.id && T[it.id]) return topicRow(T[it.id]);
+          return '<li class="mitem soon"><span class="mt">' + it.title + '</span>' + (it.note ? '<span class="pill">' + it.note + '</span>' : '') + '<span class="pill">скоро</span></li>';
+        }).join('') + '</ul></section>';
+      }).join('');
+  }
+  function vTopic(id) {
+    var t = T[id]; if (!t) return notFound();
+    var ns = nextStep(t), rec = recommend(t);
+    var levels = [1, 2, 3, 4, 5].map(function (L) {
+      var ps = t.problems.filter(function (p) { return p.lvl === L; });
+      var m = mastery(ps);
+      return '<div class="lvl"><div class="lvl-n">' + L + ' · ' + LV[L][0] + '<span>' + LV[L][1] + '</span></div><div class="bar' + (m >= 0.7 ? ' goldbar' : '') + '"><i style="width:' + Math.round(m * 100) + '%"></i></div><div class="lvl-c">' + solvedIn(ps) + '/' + ps.length + '</div></div>';
+    }).join('');
+    var lessons = t.lessons.map(function (l, i) {
+      var rd = S.read[l.id];
+      return '<li><a class="lesson' + (rd ? ' read' : '') + '" href="#l-' + l.id + '"><span class="ln">' + (rd ? '✓' : i + 1) + '</span><span class="lt">' + l.title + '</span><span class="lm">' + (rd ? 'прочитано' : l.mins + ' мин') + '</span></a></li>';
+    }).join('');
+    var groups = [1, 2, 3, 4, 5].map(function (L) {
+      var ps = t.problems.filter(function (p) { return p.lvl === L; });
+      return '<div class="pgroup"><h3>Уровень ' + L + ' · ' + LV[L][0] + ' <span>' + LV[L][1] + '</span></h3><div class="pgrid">' + ps.map(function (p) {
+        var s = status(p.id), mark = s === 'clean' ? '✓' : s === 'ok' ? '◐' : s === 'bad' ? '✗' : '';
+        var lab = 'Задача ' + (p.idx + 1) + ', рейтинг ' + p.r + (s === 'new' ? '' : s === 'bad' ? ', не решена' : ', решена');
+        return '<a class="pchip ' + s + (rec && rec.id === p.id ? ' rec' : '') + '" href="#p-' + p.id + '" aria-label="' + lab + '"><span class="pn">' + (p.idx + 1) + '</span><span class="ps">' + mark + '</span><span class="pr">' + p.r + (p.type === 'proof' ? ' · док.' : '') + '</span></a>';
+      }).join('') + '</div></div>';
+    }).join('');
+    return '<div><nav class="crumbs"><a href="#map">Темы</a> / ' + SEC[t.sec] + '</nav><h1 class="pg" style="margin-top:6px">' + t.title + '</h1><p class="pg-sub">' + t.blurb + '</p></div>' +
+      '<div class="actions"><a class="btn" href="' + ns.href + '">' + esc(ns.label) + '</a></div>' +
+      '<section class="panel levels"><div class="lab">Освоение по уровням</div>' + levels + '</section>' +
+      '<section class="msec"><h2>Теория</h2><ol class="lessons">' + lessons + '</ol></section>' +
+      '<section class="msec"><h2>Задачи</h2><p class="small" style="margin:0">Число под номером — рейтинг задачи. Золотая рамка — рекомендованная следующая. ✓ — решена с первой попытки, ◐ — решена с подсказкой или со второй попытки, ✗ — пока не решена.</p>' + groups + '</section>';
+  }
+  function findLesson(id) {
+    for (var i = 0; i < MM.topics.length; i++) {
+      var t = MM.topics[i];
+      for (var j = 0; j < t.lessons.length; j++) if (t.lessons[j].id === id) return { t: t, l: t.lessons[j], i: j };
+    }
+    return null;
+  }
+  function vLesson(id) {
+    var f = findLesson(id); if (!f) return notFound();
+    var t = f.t, l = f.l, nxt = t.lessons[f.i + 1], prv = t.lessons[f.i - 1];
+    var body = l.html.replace(/<table class="tbl">/g, '<div class="tblwrap"><table class="tbl">').replace(/<\/table>/g, '</table></div>');
+    return '<div><nav class="crumbs"><a href="#map">Темы</a> / <a href="#t-' + t.id + '">' + t.title + '</a> / Теория ' + (f.i + 1) + ' из ' + t.lessons.length + '</nav>' +
+      '<h1 class="pg" style="margin-top:6px">' + l.title + '</h1><p class="pg-sub">' + l.mins + ' минут чтения</p></div>' +
+      '<article class="lessonbody">' + body + '</article>' +
+      '<div class="pnav">' + (prv ? '<a class="btn ghost" href="#l-' + prv.id + '">← ' + prv.title + '</a>' : '<span></span>') +
+      '<button class="btn" type="button" data-act="read" data-id="' + l.id + '">' + (nxt ? 'Понятно, дальше →' : 'Понятно, к задачам →') + '</button></div>';
+  }
+  function hintsBlock(p, ratedPending) {
+    var hs = p.hints || [];
+    if (!hs.length) return '';
+    var shown = hs.slice(0, cur.hints).map(function (h, i) { return '<div class="hint"><div class="lab">Подсказка ' + (i + 1) + '</div>' + h + '</div>'; }).join('');
+    var more = cur.hints < hs.length && cur.phase !== 'done' && cur.phase !== 'graded'
+      ? '<div class="actions"><button class="btn ghost small" type="button" data-act="hint">Подсказка ' + (cur.hints + 1) + ' из ' + hs.length + (ratedPending ? ' · −20% к результату' : '') + '</button></div>' : '';
+    return '<section class="hints" aria-label="Подсказки">' + shown + more + '</section>';
+  }
+  function deltaChip(d) { return d == null ? '' : '<span class="delta ' + deltaCls(d) + '">' + sign(d) + '</span>'; }
+  function vProblem(id) {
+    var p = P[id]; if (!p) return notFound();
+    if (!cur || cur.id !== id) cur = newCur(id);
+    var t = T[p.topic], a = S.att[id], due = isDue(id);
+    var ratedPending = !a || (due && !cur.reviewDone);
+    var isDaily = S.daily[today()] && S.daily[today()].id === id, isWeekly = S.weekly[weekKey()] && S.weekly[weekKey()].id === id;
+    var tags = '<span class="pill num" title="Рейтинг задачи">' + p.r + '</span><span class="pill">' + (p.type === 'proof' ? 'доказательство' : 'тест') + '</span>' +
+      (isDaily ? '<span class="pill gold">задача дня</span>' : '') + (isWeekly ? '<span class="pill gold">задача недели</span>' : '') +
+      (due ? '<span class="pill bad">повторение</span>' : '') + statusPill(id) +
+      (p.type !== 'proof' && cur.phase === 'solve' ? '<span class="timer" id="timer" aria-label="Время">0:00</span>' : '');
+    var h = '<div><nav class="crumbs"><a href="#map">Темы</a> / <a href="#t-' + t.id + '">' + t.title + '</a> / Уровень ' + p.lvl + ' · ' + LV[p.lvl][0] + '</nav></div>' +
+      '<div class="phead"><h1>Задача ' + (p.idx + 1) + '</h1>' + tags + '</div>' +
+      '<section class="stmt">' + p.q + (p.note ? '<div class="note">' + p.note + '</div>' : '') + '</section>';
+
+    if (p.type === 'choice') {
+      var locked = cur.phase === 'done' || cur.phase === 'seen';
+      h += '<div class="opts" role="group" aria-label="Варианты ответа">' + p.opts.map(function (o, i) {
+        var cls = 'opt';
+        if (cur.picked === i) cls += cur.result && cur.result.ok ? ' right' : ' wrong';
+        if (locked && i === p.a) cls = 'opt right';
+        return '<button type="button" class="' + cls + '" data-act="opt" data-i="' + i + '"' + (locked || (cur.phase === 'wrong' && cur.picked === i) ? ' disabled' : '') + '><span class="ol">' + 'АБВГ'.charAt(i) + '</span><span>' + o + '</span></button>';
+      }).join('') + '</div>' + (cur.phase === 'solve' ? '<p class="small" style="margin:0">Можно нажать клавишу 1–4.</p>' : '');
+    } else if (p.type === 'num') {
+      if (cur.phase === 'solve' || cur.phase === 'wrong') {
+        h += '<form class="ansform" data-form="ans"><label class="lab" for="ans" style="flex-basis:100%">Ответ</label><input id="ans" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"><button class="btn" type="submit">Ответить</button></form>';
+      }
+    } else {
+      h += proofArea(p);
+    }
+
+    if (cur.result && p.type !== 'proof') {
+      var r = cur.result;
+      if (r.gaveUp) h += '<div class="fb no" id="after" tabindex="-1"><span class="fb-t">Решение открыто</span>' + deltaChip(r.d) + '<span class="fb-sub">Задача вернётся на повторение завтра.</span></div>';
+      else if (r.ok) h += '<div class="fb ok" id="after" tabindex="-1"><span class="fb-t">Верно</span>' + deltaChip(r.d) + '<span class="fb-sub">' + (r.sec ? 'за ' + Math.floor(r.sec / 60) + ':' + pad(r.sec % 60) : '') + (r.d == null ? ' · без изменения рейтинга' : '') + '</span></div>';
+      else h += '<div class="fb no" id="after" tabindex="-1"><span class="fb-t">Неверно</span>' + deltaChip(r.d) + '<span class="fb-sub">Подумай ещё раз или открой подсказку.</span>' +
+        (cur.phase === 'wrong' && p.type === 'choice' ? '<button class="btn ghost small" type="button" data-act="retry">Ещё раз</button>' : '') + '</div>';
+    }
+    if (cur.result && p.type === 'proof' && cur.phase === 'graded') {
+      var g = cur.result;
+      h += '<div class="fb ' + (g.pts >= 4 ? 'ok' : 'no') + '" id="after" tabindex="-1"><span class="fb-t">' + g.pts + ' из 7</span>' + deltaChip(g.d) + '<span class="fb-sub">' + (g.pts === 7 ? 'Полное решение.' : g.pts >= 4 ? 'Хорошо, но не до конца. Задача вернётся на повторение.' : 'Задача вернётся на повторение через 3 дня. Разбери решение ещё раз.') + '</span></div>';
+    }
+
+    if (p.type !== 'proof' || cur.phase === 'solve') h += hintsBlock(p, ratedPending);
+    if (p.type !== 'proof' && !cur.showSol && cur.phase !== 'done') {
+      h += '<div class="actions"><button class="linkbtn" type="button" data-act="giveup">' + (S.att[id] ? 'Показать решение' : 'Сдаюсь — показать решение (задача засчитается как нерешённая)') + '</button></div>';
+    }
+    if (p.type !== 'proof' && cur.showSol) h += '<section class="sol"><div class="lab">Решение</div><div class="sol-t">' + p.sol + '</div></section>';
+
+    var teach = S.teacher[id];
+    h += '<div class="actions"><button class="btn ghost small" type="button" data-act="teacher" aria-pressed="' + !!teach + '">' + (teach ? '✓ В списке для учителя' : 'Обсудить с учителем') + '</button></div>';
+
+    var list = t.problems, prev = list[p.idx - 1], next = list[p.idx + 1];
+    h += '<nav class="pnav" aria-label="Навигация по задачам">' +
+      (prev ? '<a class="btn ghost" href="#p-' + prev.id + '">← Задача ' + (prev.idx + 1) + '</a>' : '<a class="btn ghost" href="#t-' + t.id + '">← К теме</a>') +
+      (next ? '<a class="btn" href="#p-' + next.id + '">Задача ' + (next.idx + 1) + ' →</a>' : '<a class="btn" href="#t-' + t.id + '">К теме →</a>') + '</nav>';
+    return h;
+  }
+  function mathKeys(target) {
+    return '<div class="mkeys" role="toolbar" aria-label="Математические символы">' + KEYS.map(function (k) {
+      return '<button type="button" class="mk" data-act="mk" data-k="' + k + '" data-t="' + target + '" aria-label="Вставить ' + k + '">' + k + '</button>';
+    }).join('') + '<button type="button" class="mk w" data-act="mk" data-k=" (mod )" data-t="' + target + '">mod</button></div>';
+  }
+  function proofArea(p) {
+    var id = p.id, a = S.att[id];
+    if (cur.phase === 'solve') {
+      return '<section class="proofbox"><label class="lab" for="draft">Твоё решение</label>' + mathKeys('draft') +
+        '<textarea id="draft" class="draft mathin" spellcheck="false" placeholder="Пиши решение здесь или на бумаге. Быстрый ввод: <= → ≤, >= → ≥, != → ≠, sqrt → √, ^2 → ², => → ⇒">' + esc(S.drafts[id] || '') + '</textarea>' +
+        '<p class="small" style="margin:0">Черновик сохраняется автоматически.' + (a && a.pts != null ? ' Лучшая оценка: ' + a.pts + ' из 7.' : '') + '</p>' +
+        '<div class="actions"><button class="btn" type="button" data-act="proof-check">Решение готово — проверить себя</button><button class="btn ghost" type="button" data-act="proof-none">Не получается — показать решение</button></div></section>';
+    }
+    var total = rubricTotal(p);
+    var head = '<section class="sol"><div class="lab">Эталонное решение</div><div class="sol-t">' + p.sol + '</div></section>';
+    if (cur.phase === 'graded') return head;
+    var items = p.rubric.map(function (r, i) {
+      return '<li><label><input type="checkbox" data-rub="' + i + '"' + (cur.rub[i] ? ' checked' : '') + (cur.other || cur.none ? ' disabled' : '') + '><span class="rt">' + r[1] + '</span><span class="rp">+' + r[0] + '</span></label></li>';
+    }).join('');
+    return head + '<section class="proofbox"><div class="lab">Оцени себя как жюри</div><p class="small" style="margin:0">Отметь шаги, которые есть в твоём решении и доказаны строго. Будь честен: рейтинг полезен, только если он правдивый. Сомневаешься — покажи решение учителю.</p>' +
+      '<ul class="rubric">' + items +
+      '<li><label><input type="checkbox" data-other="1"' + (cur.other ? ' checked' : '') + (cur.none ? ' disabled' : '') + '><span class="rt">Решил другим способом, и решение полное и строгое</span><span class="rp">7</span></label></li>' +
+      '<li><label><input type="checkbox" data-none="1"' + (cur.none ? ' checked' : '') + '><span class="rt">Не решил</span><span class="rp">0</span></label></li></ul>' +
+      '<div class="grade-row"><span>Итого:</span><span class="grade-total" id="gtotal">' + total + ' из 7</span><button class="btn" type="button" data-act="proof-grade">Сохранить оценку</button></div></section>';
+  }
+  function rubricTotal(p) {
+    if (cur.none) return 0;
+    if (cur.other) return 7;
+    var s = 0; p.rubric.forEach(function (r, i) { if (cur.rub[i]) s += r[0]; });
+    return s;
+  }
+
+  function vDiag() {
+    var run = S.diagRun;
+    if (!run && S.diag) return diagResult();
+    if (!run) {
+      return '<div><nav class="crumbs"><a href="#today">Сегодня</a> / Диагностика</nav><h1 class="pg" style="margin-top:6px">Диагностика</h1></div>' +
+        '<section class="panel" style="max-width:720px"><p style="margin-top:0">' + DIAG.length + ' задач по четырём разделам: теория чисел, алгебра, геометрия, комбинаторика. Примерно ' + MM.diag.minutes + ' минут.</p>' +
+        '<ul class="steps"><li>Подсказок нет, ответы проверяются в конце.</li><li>Если не знаешь — нажми «Пропустить», это нормально. Задачи идут от простых к районному этапу.</li><li>По результату получишь стартовый рейтинг и рекомендацию, с чего начать.</li></ul>' +
+        '<div class="actions" style="margin-top:16px"><button class="btn" type="button" data-act="diag-start">Начать</button></div></section>';
+    }
+    var p = DIAG[run.i];
+    var h = '<div><nav class="crumbs"><a href="#today">Сегодня</a> / Диагностика</nav></div>' +
+      '<div class="dprog"><span class="lab">Задача ' + (run.i + 1) + ' из ' + DIAG.length + '</span><div class="bar"><i style="width:' + (run.i / DIAG.length * 100) + '%"></i></div><span class="pill">' + SEC[p.sec] + '</span></div>' +
+      '<section class="stmt">' + p.q + '</section>';
+    if (p.type === 'choice') {
+      h += '<div class="opts" role="group" aria-label="Варианты ответа">' + p.opts.map(function (o, i) {
+        return '<button type="button" class="opt" data-act="dopt" data-i="' + i + '"><span class="ol">' + 'АБВГ'.charAt(i) + '</span><span>' + o + '</span></button>';
+      }).join('') + '</div>';
+    } else {
+      h += '<form class="ansform" data-form="dans"><label class="lab" for="dans" style="flex-basis:100%">Ответ</label><input id="dans" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"><button class="btn" type="submit">Ответить</button></form>';
+    }
+    h += '<div class="actions"><button class="btn ghost small" type="button" data-act="diag-skip">Пропустить</button></div>';
+    return h;
+  }
+  function diagResult() {
+    var d = S.diag, rows = Object.keys(SEC).filter(function (k) { return d.bySec[k]; }).map(function (k) {
+      var v = d.bySec[k];
+      return '<div><div class="stat-row"><span>' + SEC[k] + '</span><b>' + v[0] + '/' + v[1] + '</b></div><div class="bar"><i style="width:' + (v[0] / v[1] * 100) + '%"></i></div></div>';
+    }).join('');
+    var list = DIAG.map(function (p) {
+      var ok = d.ok[p.id], ans = d.ans[p.id];
+      var given = ans == null ? 'пропущено' : p.type === 'choice' ? p.opts[ans] : esc(ans);
+      return '<li><details><summary><span class="rs ' + (ok ? 'y' : 'n') + '">' + (ok ? '✓' : '✗') + '</span><span class="rq">' + p.q + '</span></summary><div class="rsol"><b>Твой ответ:</b> ' + given + '<br>' + p.sol + '</div></details></li>';
+    }).join('');
+    var nt = d.bySec.nt;
+    var rec = nt && nt[0] >= 3 ? 'Начни тему «Делимость и остатки» с уровня 2: базу ты знаешь.' : 'Начни тему «Делимость и остатки» с первых уроков: это фундамент для всех этапов.';
+    return '<div><nav class="crumbs"><a href="#today">Сегодня</a> / Диагностика</nav><h1 class="pg" style="margin-top:6px">Результат диагностики</h1><p class="pg-sub">' + fmtShort(d.ts) + '</p></div>' +
+      '<section class="panel" style="max-width:720px"><div class="lab">Стартовый рейтинг</div><div class="rating-big" style="font-size:64px;margin:6px 0">' + d.perf + '</div>' +
+      (d.applied ? '<p style="margin:0">Это твоя отправная точка. Дальше рейтинг меняется с каждой задачей.</p>' : '<p style="margin:0">Рейтинг уже идёт от решённых задач, поэтому этот результат его не меняет.</p>') +
+      '<p style="margin:10px 0 0"><b>' + rec + '</b></p></section>' +
+      '<section class="sec-res">' + rows + '</section>' +
+      '<div class="actions"><a class="btn" href="#t-div">Перейти к теме</a><button class="btn ghost" type="button" data-act="diag-restart">Пройти заново</button></div>' +
+      '<section class="msec"><h2>Задачи и решения</h2><ul class="reslist">' + list + '</ul></section>';
+  }
+
+  function vMe() {
+    var r = S.rating, solved = ALL.filter(function (p) { var s = status(p.id); return s === 'clean' || s === 'ok'; }).length;
+    var atts = Object.keys(S.att).filter(function (k) { return P[k]; }).map(function (k) { return S.att[k]; });
+    var first = atts.length ? Math.round(atts.filter(function (a) { return a.s >= 0.8; }).length / atts.length * 100) : 0;
+    var total = Object.keys(S.time).reduce(function (s, k) { return s + S.time[k]; }, 0);
+    var flagged = Object.keys(S.teacher).filter(function (k) { return S.teacher[k] && P[k]; });
+    var tl = flagged.length ? '<ul class="tlist">' + flagged.map(function (k) {
+      var p = P[k];
+      return '<li><div class="lab">' + probLabel(p) + ' · задача ' + (p.idx + 1) + '</div><div class="tq">' + p.q + '</div>' + (S.drafts[k] ? '<div class="td">' + esc(S.drafts[k]) + '</div>' : '') + '<div class="actions" style="margin-top:8px"><a class="btn ghost small" href="#p-' + k + '">Открыть</a><button class="btn ghost small" type="button" data-act="unflag" data-id="' + k + '">Убрать из списка</button></div></li>';
+    }).join('') + '</ul>' : '<p class="muted" style="margin:0">Пока пусто. На странице задачи есть кнопка «Обсудить с учителем».</p>';
+    return '<div><h1 class="pg">Профиль</h1><p class="pg-sub">Твой рейтинг, статистика и всё, что нужно показать учителю.</p></div>' +
+      '<section class="panel"><div class="hero" style="grid-template-columns:minmax(0,.8fr) minmax(0,1.6fr)"><div class="hero-main"><div class="lab">Рейтинг</div><div class="rating-big">' + (r == null ? '—' : r) + '</div>' +
+      '<div class="hero-sub">Пик ' + (S.peak || '—') + ' · ' + S.n + ' ' + plural(S.n, 'задача', 'задачи', 'задач') + ' в рейтинге</div></div><div class="chart" data-chart="big"></div></div></section>' +
+      '<section class="tiles"><div class="tile"><span>Решено задач</span><b>' + solved + '/' + ALL.length + '</b></div><div class="tile"><span>С первой попытки</span><b>' + first + '%</b></div>' +
+      '<div class="tile"><span>Эта неделя</span><b>' + mins(weekSec()) + '</b></div><div class="tile"><span>Дней подряд</span><b>' + streak() + '</b></div></section>' +
+      '<section class="msec"><h2>Для учителя</h2><p class="small" style="margin:0">Задачи, которые ты отметил, вместе с твоими черновиками. Покажи их учителю математики.</p>' + tl + '</section>' +
+      '<section class="msec"><h2>Диагностика</h2>' + (S.diag ? '<p style="margin:0">Стартовый рейтинг ' + S.diag.perf + ' (' + fmtShort(S.diag.ts) + '). <a href="#diag">Подробнее</a></p>' : '<p style="margin:0"><a href="#diag">Пройти диагностику</a></p>') + '</section>' +
+      '<section class="msec"><h2>Перенос на другое устройство</h2><p class="small" style="margin:0">Прогресс хранится в этом браузере. Чтобы продолжить на телефоне или другом компьютере, скопируй код и вставь его там.</p>' +
+      '<label class="lab" for="exp">Код прогресса</label><textarea id="exp" class="code" readonly>' + exportCode() + '</textarea>' +
+      '<div class="actions"><button class="btn ghost small" type="button" data-act="copy">Скопировать код</button><span class="small" id="copymsg" aria-live="polite"></span></div>' +
+      '<label class="lab" for="imp">Вставить код с другого устройства</label><textarea id="imp" class="code" placeholder="MM1:…"></textarea>' +
+      '<div class="actions"><button class="btn ghost small" type="button" data-act="import">Загрузить прогресс</button><span class="small" id="impmsg" aria-live="polite"></span></div></section>' +
+      '<section class="msec"><h2>Сброс</h2><div class="actions"><button class="btn ghost small" type="button" data-act="reset" id="resetbtn">Сбросить весь прогресс</button></div></section>' +
+      '<p class="small">Всего времени на математику: ' + mins(total) + '.</p>';
+  }
+  function notFound() { return '<div><h1 class="pg">Страница не найдена</h1><p class="pg-sub"><a href="#today">На главную</a></p></div>'; }
+
+  // ---------- export / import ----------
+  function toB64(str) { var bytes = new TextEncoder().encode(str), bin = ''; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]); return btoa(bin); }
+  function fromB64(b64) { var bin = atob(b64), bytes = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i); return new TextDecoder().decode(bytes); }
+  function exportCode() { var c = Object.assign({}, S); delete c.diagRun; try { return 'MM1:' + toB64(JSON.stringify(c)); } catch (e) { return ''; } }
+  function importCode(txt) {
+    var s = String(txt || '').trim();
+    if (s.indexOf('MM1:') !== 0) throw new Error('Код должен начинаться с MM1:');
+    var obj = JSON.parse(fromB64(s.slice(4)));
+    if (!obj || typeof obj !== 'object' || obj.v !== 1) throw new Error('Код не распознан');
+    S = Object.assign(fresh(), obj); cur = null; save();
+  }
+
+  // ---------- chart ----------
+  function drawCharts() {
+    var els = document.querySelectorAll('[data-chart]');
+    for (var i = 0; i < els.length; i++) drawChart(els[i]);
+  }
+  function drawChart(el) {
+    var hist = S.hist;
+    if (!hist || hist.length < 2) {
+      el.innerHTML = '<div class="chart-empty">' + (S.rating == null ? 'График рейтинга появится после диагностики.' : 'График появится после первых решённых задач.') + '</div>';
+      return;
+    }
+    var big = el.getAttribute('data-chart') === 'big';
+    var W = Math.max(260, el.clientWidth || 600), H = big ? 240 : 180;
+    var padL = 6, padR = 6, padT = 16, padB = 20;
+    var vals = hist.map(function (h) { return h[1]; });
+    var nx = stageNext(Math.max.apply(null, vals));
+    var lo = Math.floor((Math.min.apply(null, vals) - 60) / 50) * 50;
+    var hi = Math.ceil((Math.max(Math.max.apply(null, vals), nx ? nx.r : 0) + 40) / 50) * 50;
+    var n = hist.length;
+    function X(i) { return padL + (W - padL - padR) * (n === 1 ? 1 : i / (n - 1)); }
+    function Y(v) { return padT + (H - padT - padB) * (1 - (v - lo) / (hi - lo)); }
+    var pts = hist.map(function (h, i) { return { x: X(i), y: Y(h[1]), r: h[1], t: h[0], d: i ? h[1] - hist[i - 1][1] : null }; });
+    var lines = STAGES.filter(function (s) { return s.r > lo && s.r < hi; }).map(function (s) {
+      var y = Y(s.r).toFixed(1);
+      return '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + y + '" y2="' + y + '" stroke="var(' + (s.goal ? '--gold-fill' : '--rule-2') + ')" stroke-width="1" stroke-dasharray="4 4"/>' +
+        '<text x="' + (W - padR) + '" y="' + (y - 5) + '" text-anchor="end" font-size="11.5" fill="var(' + (s.goal ? '--gold' : '--ink-3') + ')" font-family="var(--font-ui)">' + s.name + ' · ' + s.r + '</text>';
+    }).join('');
+    var path = pts.map(function (p, i) { return (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); }).join(' ');
+    var area = path + ' L' + pts[n - 1].x.toFixed(1) + ' ' + (H - padB) + ' L' + pts[0].x.toFixed(1) + ' ' + (H - padB) + ' Z';
+    var last = pts[n - 1];
+    el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="График рейтинга: от ' + vals[0] + ' до ' + vals[n - 1] + '">' +
+      '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + (H - padB) + '" y2="' + (H - padB) + '" stroke="var(--rule)" stroke-width="1"/>' + lines +
+      '<path d="' + area + '" fill="var(--gold-soft)" stroke="none"/>' +
+      '<path d="' + path + '" fill="none" stroke="var(--gold-fill)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+      '<circle cx="' + last.x.toFixed(1) + '" cy="' + last.y.toFixed(1) + '" r="5" fill="var(--gold-fill)" stroke="var(--surface)" stroke-width="2"/>' +
+      '<text x="' + padL + '" y="' + (H - 4) + '" font-size="11" fill="var(--ink-3)" font-family="var(--font-ui)">старт</text>' +
+      '<text x="' + (W - padR) + '" y="' + (H - 4) + '" text-anchor="end" font-size="11" fill="var(--ink-3)" font-family="var(--font-ui)">задачи →</text>' +
+      '<line class="xh" x1="0" x2="0" y1="' + padT + '" y2="' + (H - padB) + '" stroke="var(--ink-3)" stroke-width="1" visibility="hidden"/>' +
+      '<circle class="xd" r="5" fill="var(--gold-fill)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>' +
+      '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="transparent" class="hit"/></svg><div class="tip" hidden></div>';
+    var svg = el.querySelector('svg'), tip = el.querySelector('.tip'), xh = svg.querySelector('.xh'), xd = svg.querySelector('.xd');
+    function move(ev) {
+      var rect = svg.getBoundingClientRect(), mx = ev.clientX - rect.left, best = pts[0];
+      pts.forEach(function (p) { if (Math.abs(p.x - mx) < Math.abs(best.x - mx)) best = p; });
+      xh.setAttribute('x1', best.x); xh.setAttribute('x2', best.x); xh.setAttribute('visibility', 'visible');
+      xd.setAttribute('cx', best.x); xd.setAttribute('cy', best.y); xd.setAttribute('visibility', 'visible');
+      tip.innerHTML = fmtShort(best.t) + ' · <b>' + best.r + '</b>' + (best.d == null ? '' : ' (' + sign(best.d) + ')');
+      tip.hidden = false;
+      var tw = tip.offsetWidth || 120, left = Math.max(tw / 2, Math.min(W - tw / 2, best.x));
+      tip.style.left = left + 'px'; tip.style.top = best.y + 'px';
+    }
+    function leave() { xh.setAttribute('visibility', 'hidden'); xd.setAttribute('visibility', 'hidden'); tip.hidden = true; }
+    svg.addEventListener('pointermove', move);
+    svg.addEventListener('pointerdown', move);
+    svg.addEventListener('pointerleave', leave);
+  }
+
+  // ---------- render ----------
+  var root = document.getElementById('root');
+  var lastView = '';
+  function render() {
+    route = parseRoute();
+    var body;
+    if (route.view === 'problem') body = vProblem(route.id);
+    else if (route.view === 'topic') body = vTopic(route.id);
+    else if (route.view === 'lesson') body = vLesson(route.id);
+    else if (route.view === 'map') body = vMap();
+    else if (route.view === 'me') body = vMe();
+    else if (route.view === 'diag') body = vDiag();
+    else body = vToday();
+    root.innerHTML = header() + '<div class="wrap"><main class="main">' + body + footer() + '</main></div>';
+    var key = location.hash;
+    if (key !== lastView) { window.scrollTo(0, 0); lastView = key; }
+    drawCharts();
+    tickTimer();
+  }
+  function go(h) { if (location.hash === h) render(); else location.hash = h; }
+
+  // timer for test problems
+  function tickTimer() {
+    var el = document.getElementById('timer');
+    if (!el || !cur) return;
+    var s = Math.floor((Date.now() - cur.t0) / 1000);
+    el.textContent = Math.floor(s / 60) + ':' + pad(s % 60);
+  }
+  setInterval(tickTimer, 1000);
+
+  // study time
+  var lastAct = Date.now(), ticks = 0;
+  ['pointerdown', 'keydown', 'scroll', 'input'].forEach(function (ev) { window.addEventListener(ev, function () { lastAct = Date.now(); }, { passive: true }); });
+  setInterval(function () {
+    if (document.visibilityState !== 'visible' || Date.now() - lastAct > 120000) return;
+    if (['problem', 'lesson', 'diag'].indexOf(route.view) < 0) return;
+    var k = today(); S.time[k] = (S.time[k] || 0) + 15; ticks++;
+    if (ticks % 4 === 0) save();
+  }, 15000);
+
+  // ---------- events ----------
+  function insertAt(el, text) {
+    el.focus();
+    var s = el.selectionStart, e = el.selectionEnd;
+    el.value = el.value.slice(0, s) + text + el.value.slice(e);
+    var pos = s + text.length; if (text === ' (mod )') pos = s + 6;
+    el.setSelectionRange(pos, pos);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  function repl(s) { REPL.forEach(function (r) { s = s.split(r[0]).join(r[1]); }); return s; }
+  var draftTimer = null;
+  root.addEventListener('input', function (e) {
+    var el = e.target;
+    if (el.classList && el.classList.contains('mathin')) {
+      var pos = el.selectionStart, before = el.value.slice(0, pos), after = el.value.slice(pos);
+      var nb = repl(before), na = repl(after);
+      if (nb !== before || na !== after) { el.value = nb + na; el.setSelectionRange(nb.length, nb.length); }
+      if (el.id === 'draft' && cur) { S.drafts[cur.id] = el.value; clearTimeout(draftTimer); draftTimer = setTimeout(save, 600); }
+    }
+  });
+  root.addEventListener('change', function (e) {
+    var el = e.target; if (!cur) return;
+    var p = P[cur.id]; if (!p || p.type !== 'proof') return;
+    if (el.hasAttribute('data-rub')) cur.rub[el.getAttribute('data-rub')] = el.checked;
+    else if (el.hasAttribute('data-other')) { cur.other = el.checked; render(); return; }
+    else if (el.hasAttribute('data-none')) { cur.none = el.checked; render(); return; }
+    var g = document.getElementById('gtotal'); if (g) g.textContent = rubricTotal(p) + ' из 7';
+  });
+  root.addEventListener('submit', function (e) {
+    var f = e.target; e.preventDefault();
+    if (f.getAttribute('data-form') === 'ans') {
+      var p = P[cur.id], v = document.getElementById('ans').value, ok = checkNum(p, v);
+      if (ok === null) { document.getElementById('ans').focus(); return; }
+      answerTest(cur.id, ok, null);
+    } else if (f.getAttribute('data-form') === 'dans') {
+      var dv = document.getElementById('dans').value.trim();
+      if (!dv) { document.getElementById('dans').focus(); return; }
+      diagAnswer(dv);
+    }
+  });
+  function diagAnswer(v) {
+    var run = S.diagRun, p = DIAG[run.i];
+    run.ans[p.id] = v;
+    run.i++;
+    if (run.i >= DIAG.length) diagFinish(); else save();
+    render();
+    var inp = document.getElementById('dans'); if (inp) inp.focus();
+  }
+  var resetArmed = 0;
+  root.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]'); if (!b) return;
+    var act = b.getAttribute('data-act');
+    if (act === 'opt') { var i = Number(b.getAttribute('data-i')); answerTest(cur.id, i === P[cur.id].a, i); }
+    else if (act === 'hint') { cur.hints++; render(); }
+    else if (act === 'retry') { cur.phase = 'solve'; cur.result = null; cur.picked = null; render(); }
+    else if (act === 'giveup') giveUp(cur.id);
+    else if (act === 'teacher') { S.teacher[cur.id] = !S.teacher[cur.id]; save(); render(); }
+    else if (act === 'unflag') { delete S.teacher[b.getAttribute('data-id')]; save(); render(); }
+    else if (act === 'mk') { var ta = document.getElementById(b.getAttribute('data-t')); if (ta) insertAt(ta, b.getAttribute('data-k')); }
+    else if (act === 'proof-check') { cur.phase = 'grade'; render(); }
+    else if (act === 'proof-none') { cur.phase = 'grade'; cur.none = true; render(); }
+    else if (act === 'proof-grade') gradeProof(cur.id, rubricTotal(P[cur.id]));
+    else if (act === 'read') {
+      var id = b.getAttribute('data-id'), f = findLesson(id);
+      S.read[id] = true; save();
+      var nx = f.t.lessons[f.i + 1];
+      go(nx ? '#l-' + nx.id : '#t-' + f.t.id);
+    }
+    else if (act === 'diag-start') { S.diagRun = { i: 0, ans: {}, t0: Date.now() }; save(); render(); }
+    else if (act === 'diag-skip') { var run = S.diagRun; run.ans[DIAG[run.i].id] = null; run.i++; if (run.i >= DIAG.length) diagFinish(); else save(); render(); }
+    else if (act === 'dopt') diagAnswer(Number(b.getAttribute('data-i')));
+    else if (act === 'diag-restart') { S.diag = null; S.diagRun = { i: 0, ans: {}, t0: Date.now() }; save(); render(); }
+    else if (act === 'copy') {
+      var ex = document.getElementById('exp'), msg = document.getElementById('copymsg');
+      var p2 = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(ex.value) : Promise.reject();
+      p2.then(function () { msg.textContent = 'Скопировано'; }, function () { ex.focus(); ex.select(); msg.textContent = 'Код выделен — скопируй его вручную (Ctrl+C)'; });
+    }
+    else if (act === 'import') {
+      var im = document.getElementById('imp'), m2 = document.getElementById('impmsg');
+      try { importCode(im.value); render(); var m3 = document.getElementById('impmsg'); if (m3) m3.textContent = 'Прогресс загружен'; }
+      catch (err) { m2.textContent = 'Не получилось: ' + err.message + '. Проверь, что код скопирован целиком.'; }
+    }
+    else if (act === 'reset') {
+      if (Date.now() - resetArmed < 6000) { S = fresh(); cur = null; save(); go('#today'); }
+      else { resetArmed = Date.now(); b.textContent = 'Точно сбросить? Нажми ещё раз'; setTimeout(function () { var rb = document.getElementById('resetbtn'); if (rb) rb.textContent = 'Сбросить весь прогресс'; }, 6000); }
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (route.view !== 'problem' || !cur) return;
+    var tg = e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA') return;
+    var p = P[cur.id];
+    if (p && p.type === 'choice' && cur.phase === 'solve' && /^[1-4]$/.test(e.key)) {
+      var i = Number(e.key) - 1; if (i < p.opts.length) answerTest(cur.id, i === p.a, i);
+    }
+  });
+  window.addEventListener('hashchange', function () { if (parseRoute().view !== 'problem' || !cur || parseRoute().id !== cur.id) cur = null; render(); });
+  var rz = null;
+  window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(drawCharts, 150); });
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') save(); });
+
+  render();
+})();
+</script>
+</body>
+</html>
