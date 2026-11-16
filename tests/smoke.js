@@ -61,13 +61,30 @@ function expect(name, cond) { checks.push([name, !!cond]); }
 
   await nav('#t-div');
   expect('topic levels', d.querySelectorAll('.lvl').length === 5);
-  expect('topic 42 problem chips', d.querySelectorAll('.pchip').length === 42);
-  expect('topic 6 lessons', d.querySelectorAll('.lesson').length === 6);
+  expect('topic 57 problem chips', d.querySelectorAll('.pchip').length === 57);
+  expect('topic 9 lessons (6 + 3 deep)', d.querySelectorAll('.lesson').length === 9);
+  expect('deep block heading', !!$('.deephead') && $('.deephead').textContent.includes('Глубокий уровень'));
+  expect('deep lessons listed after heading', d.querySelectorAll('.deephead + .lessons .lesson').length === 3);
+  expect('15 deep problem marks', d.querySelectorAll('.pchip .dp').length === 15);
+  expect('fresh topic suggests first base lesson', $('.actions .btn').textContent.includes('Делимость и её свойства'));
 
   await nav('#l-div-l5');
   expect('lesson table wrapped', !!$('.tblwrap table'));
   click('[data-act="read"]'); await sleep(30);
   expect('read advances to next lesson', w.location.hash === '#l-div-l6' && state().read['div-l5']);
+  click('[data-act="read"]'); await sleep(30);
+  expect('last base lesson leads to problems, not to deep lessons', w.location.hash === '#t-div' && state().read['div-l6']);
+  await nav('#l-div-l7');
+  expect('deep lesson tagged', $('.pg-sub').textContent.includes('глубокий уровень'));
+  expect('deep lesson renders fractions', d.querySelectorAll('.lessonbody .fr').length >= 5);
+  click('[data-act="read"]'); await sleep(30);
+  expect('deep lesson leads to next deep lesson', w.location.hash === '#l-div-l8');
+  await nav('#l-div-l9');
+  expect('last deep lesson button goes to problems', $('[data-act="read"]').textContent.includes('к задачам'));
+  // все основные уроки прочитаны, глубокие l8 и l9 — нет: пока он не дошёл до глубоких задач, предлагается задача, а не глубокий урок
+  for (const k of ['div-l1', 'div-l2', 'div-l3', 'div-l4']) { await nav('#l-' + k); click('[data-act="read"]'); await sleep(30); }
+  await nav('#t-div');
+  expect('deep lessons wait for deep problems', $('.actions .btn').textContent.startsWith('Задача'));
 
   // correct choice answer
   await nav('#p-div-01');
@@ -138,6 +155,12 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   expect('none preselected', d.querySelector('[data-none]').checked && $('#gtotal').textContent.startsWith('0'));
   click('[data-act="proof-grade"]');
   expect('proof 0 -> bad', state().att['div-32'].st === 'bad');
+
+  // deep problem page
+  await nav('#p-div-43');
+  expect('deep problem pill', [...d.querySelectorAll('.phead .pill')].some(x => x.textContent === 'глубокий уровень'));
+  submit('[data-form="ans"]', 'ans', '3');
+  expect('div-43 answer accepted', state().att['div-43'] && state().att['div-43'].st === 'clean');
 
   // topic «Как доказывать»: lessons, Yes/No choice, number answer, rubric with roots
   await nav('#t-proof');

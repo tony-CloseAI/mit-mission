@@ -106,6 +106,7 @@ h2{font-size:21px;font-weight:650;letter-spacing:-.01em}
 .sq{white-space:nowrap}
 .sq>span{border-top:1px solid currentColor;padding:0 .1em;margin-left:.05em}
 .nw{white-space:nowrap}
+.dv{font-style:normal;padding:0 .08em}
 .next b{font-family:var(--font-num)}
 .chart{position:relative;min-height:170px}
 .chart svg{display:block}
@@ -196,6 +197,9 @@ a.mitem:hover{border-color:var(--rule-2)}
 .pchip.ok .ps{color:var(--good)}
 .pchip.bad{border-color:var(--bad)} .pchip.bad .ps{color:var(--bad)}
 .pchip.rec{box-shadow:0 0 0 2px var(--gold-fill)}
+.dp{color:var(--gold);font-weight:700}
+.deephead{margin:18px 0 10px}
+.deephead h3{font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 4px}
 
 /* lesson */
 .lessonbody{max-width:72ch;font-size:17px}
@@ -308,6 +312,13 @@ textarea.draft:focus{outline:none;border-color:var(--ink)}
 <script>
 window.MM = { topics: [], diag: null, roadmap: [],
   addTopic: function (t) { this.topics.push(t); },
+  // глубокий уровень темы лежит в отдельном файле и дописывается к теме: уроки и задачи помечаются deep
+  addDeep: function (id, d) {
+    var t = this.topics.filter(function (x) { return x.id === id; })[0];
+    if (!t) throw new Error('addDeep: нет темы ' + id);
+    (d.lessons || []).forEach(function (l) { l.deep = true; t.lessons.push(l); });
+    (d.problems || []).forEach(function (p) { p.deep = true; t.problems.push(p); });
+  },
   setDiagnostic: function (d) { this.diag = d; },
   setRoadmap: function (r) { this.roadmap = r; } };
 </script>
@@ -441,11 +452,17 @@ window.MM = { topics: [], diag: null, roadmap: [],
     return t.problems.filter(function (p) { return status(p.id) === 'new'; })[0] || null;
   }
   function nextStep(t) {
-    var unread = t.lessons.filter(function (l) { return !S.read[l.id]; });
-    var read = t.lessons.length - unread.length;
+    var base = t.lessons.filter(function (l) { return !l.deep; });
+    var unread = base.filter(function (l) { return !S.read[l.id]; });
+    var read = base.length - unread.length;
+    var unreadDeep = t.lessons.filter(function (l) { return l.deep && !S.read[l.id]; });
     var p = recommend(t);
-    if (unread.length && (read < 2 || !p || (p.lvl >= 3 && read < t.lessons.length))) {
+    if (unread.length && (read < 2 || !p || (p.lvl >= 3 && read < base.length))) {
       return { href: '#l-' + unread[0].id, label: 'Читать: ' + unread[0].title, kind: 'lesson', lesson: unread[0] };
+    }
+    // глубокие уроки — когда дошёл до глубоких задач или до международного уровня
+    if (unreadDeep.length && (!p || p.deep || p.lvl >= 5)) {
+      return { href: '#l-' + unreadDeep[0].id, label: 'Читать: ' + unreadDeep[0].title, kind: 'lesson', lesson: unreadDeep[0] };
     }
     if (p) return { href: '#p-' + p.id, label: 'Задача ' + (p.idx + 1) + ' · ' + LV[p.lvl][0], kind: 'problem', p: p };
     return { href: '#t-' + t.id, label: 'Тема пройдена — повтори трудные задачи', kind: 'done' };
@@ -737,23 +754,28 @@ window.MM = { topics: [], diag: null, roadmap: [],
       var m = mastery(ps);
       return '<div class="lvl"><div class="lvl-n">' + L + ' · ' + LV[L][0] + '<span>' + LV[L][1] + '</span></div><div class="bar' + (m >= 0.7 ? ' goldbar' : '') + '"><i style="width:' + Math.round(m * 100) + '%"></i></div><div class="lvl-c">' + solvedIn(ps) + '/' + ps.length + '</div></div>';
     }).join('');
-    var lessons = t.lessons.map(function (l, i) {
+    var lessonItem = function (l, i) {
       var rd = S.read[l.id];
       return '<li><a class="lesson' + (rd ? ' read' : '') + '" href="#l-' + l.id + '"><span class="ln">' + (rd ? '✓' : i + 1) + '</span><span class="lt">' + l.title + '</span><span class="lm">' + (rd ? 'прочитано' : l.mins + ' мин') + '</span></a></li>';
-    }).join('');
+    };
+    var lessons = t.lessons.map(function (l, i) { return l.deep ? '' : lessonItem(l, i); }).join('');
+    var deepLessons = t.lessons.map(function (l, i) { return l.deep ? lessonItem(l, i) : ''; }).join('');
+    var hasDeep = t.problems.some(function (p) { return p.deep; });
     var groups = [1, 2, 3, 4, 5].map(function (L) {
       var ps = t.problems.filter(function (p) { return p.lvl === L; });
       return '<div class="pgroup"><h3>Уровень ' + L + ' · ' + LV[L][0] + ' <span>' + LV[L][1] + '</span></h3><div class="pgrid">' + ps.map(function (p) {
         var s = status(p.id), mark = s === 'clean' ? '✓' : s === 'ok' ? '◐' : s === 'bad' ? '✗' : '';
         var lab = 'Задача ' + (p.idx + 1) + ', рейтинг ' + p.r + (s === 'new' ? '' : s === 'bad' ? ', не решена' : ', решена');
-        return '<a class="pchip ' + s + (rec && rec.id === p.id ? ' rec' : '') + '" href="#p-' + p.id + '" aria-label="' + lab + '"><span class="pn">' + (p.idx + 1) + '</span><span class="ps">' + mark + '</span><span class="pr">' + p.r + (p.type === 'proof' ? ' · док.' : '') + '</span></a>';
+        if (p.deep) lab += ', глубокий уровень';
+        return '<a class="pchip ' + s + (rec && rec.id === p.id ? ' rec' : '') + '" href="#p-' + p.id + '" aria-label="' + lab + '"><span class="pn">' + (p.idx + 1) + '</span><span class="ps">' + mark + '</span><span class="pr">' + (p.deep ? '<b class="dp" aria-hidden="true">◆</b> ' : '') + p.r + (p.type === 'proof' ? ' · док.' : '') + '</span></a>';
       }).join('') + '</div></div>';
     }).join('');
     return '<div><nav class="crumbs"><a href="#map">Темы</a> / ' + SEC[t.sec] + '</nav><h1 class="pg" style="margin-top:6px">' + t.title + '</h1><p class="pg-sub">' + t.blurb + '</p></div>' +
       '<div class="actions"><a class="btn" href="' + ns.href + '">' + esc(ns.label) + '</a></div>' +
       '<section class="panel levels"><div class="lab">Освоение по уровням</div>' + levels + '</section>' +
-      '<section class="msec"><h2>Теория</h2><ol class="lessons">' + lessons + '</ol></section>' +
-      '<section class="msec"><h2>Задачи</h2><p class="small" style="margin:0">Число под номером — рейтинг задачи. Золотая рамка — рекомендованная следующая. ✓ — решена с первой попытки, ◐ — решена с подсказкой или со второй попытки, ✗ — пока не решена.</p>' + groups + '</section>';
+      '<section class="msec"><h2>Теория</h2><ol class="lessons">' + lessons + '</ol>' +
+      (deepLessons ? '<div class="deephead"><h3>Глубокий уровень <span class="pill gold">для золота</span></h3><p class="small" style="margin:0">Приёмы международных олимпиад. На республиканской олимпиаде ими владеют единицы — это твоё преимущество на финале. Читай, когда дойдёшь до задач со знаком ◆.</p></div><ol class="lessons">' + deepLessons + '</ol>' : '') + '</section>' +
+      '<section class="msec"><h2>Задачи</h2><p class="small" style="margin:0">Число под номером — рейтинг задачи. Золотая рамка — рекомендованная следующая. ✓ — решена с первой попытки, ◐ — решена с подсказкой или со второй попытки, ✗ — пока не решена.' + (hasDeep ? ' <b class="dp">◆</b> — задача глубокого уровня.' : '') + '</p>' + groups + '</section>';
   }
   function findLesson(id) {
     for (var i = 0; i < MM.topics.length; i++) {
@@ -762,12 +784,17 @@ window.MM = { topics: [], diag: null, roadmap: [],
     }
     return null;
   }
+  // следующий урок того же слоя: после основы — к задачам, глубокие уроки идут друг за другом
+  function nextLesson(f) {
+    var nx = f.t.lessons[f.i + 1];
+    return nx && !!nx.deep === !!f.l.deep ? nx : null;
+  }
   function vLesson(id) {
     var f = findLesson(id); if (!f) return notFound();
-    var t = f.t, l = f.l, nxt = t.lessons[f.i + 1], prv = t.lessons[f.i - 1];
+    var t = f.t, l = f.l, nxt = nextLesson(f), prv = t.lessons[f.i - 1];
     var body = l.html.replace(/<table class="tbl">/g, '<div class="tblwrap"><table class="tbl">').replace(/<\/table>/g, '</table></div>');
     return '<div><nav class="crumbs"><a href="#map">Темы</a> / <a href="#t-' + t.id + '">' + t.title + '</a> / Теория ' + (f.i + 1) + ' из ' + t.lessons.length + '</nav>' +
-      '<h1 class="pg" style="margin-top:6px">' + l.title + '</h1><p class="pg-sub">' + l.mins + ' минут чтения</p></div>' +
+      '<h1 class="pg" style="margin-top:6px">' + l.title + '</h1><p class="pg-sub">' + l.mins + ' минут чтения' + (l.deep ? ' · <span class="pill gold">глубокий уровень</span>' : '') + '</p></div>' +
       '<article class="lessonbody">' + body + '</article>' +
       '<div class="pnav">' + (prv ? '<a class="btn ghost" href="#l-' + prv.id + '">← ' + prv.title + '</a>' : '<span></span>') +
       '<button class="btn" type="button" data-act="read" data-id="' + l.id + '">' + (nxt ? 'Понятно, дальше →' : 'Понятно, к задачам →') + '</button></div>';
@@ -790,6 +817,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     var isDaily = S.daily[today()] && S.daily[today()].id === id, isWeekly = S.weekly[weekKey()] && S.weekly[weekKey()].id === id;
     var tags = '<span class="pill num" title="Рейтинг задачи">' + p.r + '</span><span class="pill">' + (p.type === 'proof' ? 'доказательство' : 'тест') + '</span>' +
       (isDaily ? '<span class="pill gold">задача дня</span>' : '') + (isWeekly ? '<span class="pill gold">задача недели</span>' : '') +
+      (p.deep ? '<span class="pill gold">глубокий уровень</span>' : '') +
       (due ? '<span class="pill bad">повторение</span>' : '') + statusPill(id) +
       (p.type !== 'proof' && cur.phase === 'solve' ? '<span class="timer" id="timer" aria-label="Время">0:00</span>' : '');
     var h = '<div><nav class="crumbs"><a href="#map">Темы</a> / <a href="#t-' + t.id + '">' + t.title + '</a> / Уровень ' + p.lvl + ' · ' + LV[p.lvl][0] + '</nav></div>' +
@@ -1145,7 +1173,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     else if (act === 'read') {
       var id = b.getAttribute('data-id'), f = findLesson(id);
       S.read[id] = true; save();
-      var nx = f.t.lessons[f.i + 1];
+      var nx = nextLesson(f);
       go(nx ? '#l-' + nx.id : '#t-' + f.t.id);
     }
     else if (act === 'diag-start') { S.diagRun = { i: 0, ans: {}, t0: Date.now() }; save(); render(); }

@@ -11,7 +11,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-CONTENT_FILES = ["roadmap.js", "diagnostic.js", "divisibility.js", "alg-expr.js", "proof.js"]
+CONTENT_FILES = ["roadmap.js", "diagnostic.js", "divisibility.js", "div-deep.js", "alg-expr.js", "proof.js"]
 MARK = "<!--@CONTENT@-->"
 ROOT_DIV = '<div id="root"></div>'
 
@@ -38,6 +38,8 @@ def assemble() -> str:
         js = (ROOT / "content" / name).read_text(encoding="utf-8")
         if "</script" in js.lower():
             raise SystemExit(f"{name}: в тексте не должно быть </script>")
+        # знак «делит» в наклонных формулах похож на косую черту — ставим его прямо
+        js = js.replace("∣", '<span class="dv">∣</span>')
         blocks.append(f"<script>\n// ---- content/{name} ----\n{js}\n</script>")
     return shell.replace(MARK, "\n".join(blocks))
 

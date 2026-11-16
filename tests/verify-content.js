@@ -11,7 +11,13 @@ const vm = require('vm');
 
 const root = path.join(__dirname, '..');
 const MM = { topics: [], diag: null, roadmap: [],
-  addTopic(t) { this.topics.push(t); }, setDiagnostic(d) { this.diag = d; }, setRoadmap(r) { this.roadmap = r; } };
+  addTopic(t) { this.topics.push(t); }, setDiagnostic(d) { this.diag = d; }, setRoadmap(r) { this.roadmap = r; },
+  addDeep(id, d) {
+    const t = this.topics.find(x => x.id === id);
+    if (!t) throw new Error('addDeep: нет темы ' + id);
+    (d.lessons || []).forEach(l => { l.deep = true; t.lessons.push(l); });
+    (d.problems || []).forEach(p => { p.deep = true; t.problems.push(p); });
+  } };
 
 const build = fs.readFileSync(path.join(root, 'build.py'), 'utf8');
 const files = JSON.parse(build.match(/CONTENT_FILES\s*=\s*(\[[^\]]*\])/)[1].replace(/'/g, '"'));
@@ -70,9 +76,13 @@ for (const t of MM.topics) {
     const a = t.problems.filter(p => p.lvl === L).map(p => p.r), b = t.problems.filter(p => p.lvl === L + 1).map(p => p.r);
     if (a.length && b.length && Math.max(...a) > Math.min(...b)) bad('RATING ORDER', t.id, 'level', L);
   }
+  // глубокий уровень: задачи только уровней 4–5, и к ним есть глубокие уроки
+  const deepP = t.problems.filter(p => p.deep), deepL = t.lessons.filter(l => l.deep);
+  deepP.filter(p => p.lvl < 4).forEach(p => bad('DEEP BELOW LEVEL 4', p.id));
+  if (deepP.length && !deepL.length) bad('DEEP PROBLEMS WITHOUT DEEP LESSONS', t.id);
   const roadmapIds = MM.roadmap.flatMap(s => s.items.map(i => i.id));
   if (!roadmapIds.includes(t.id)) bad('TOPIC NOT ON MAP', t.id);
 }
-console.log(`\ntopics: ${MM.topics.map(t => t.id + ' (' + t.problems.length + ')').join(', ')}`);
+console.log(`\ntopics: ${MM.topics.map(t => { const d = t.problems.filter(p => p.deep).length; return t.id + ' (' + t.problems.length + (d ? ', глубоких ' + d : '') + ')'; }).join(', ')}`);
 console.log(`checked ${ok} items, ${fail} problem(s)`);
 process.exit(fail ? 1 : 0);
