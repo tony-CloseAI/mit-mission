@@ -156,6 +156,16 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   click('[data-act="proof-grade"]');
   expect('proof 0 -> bad', state().att['div-32'].st === 'bad');
 
+  // topic «Треугольники»: figures in lessons and statements (F2)
+  await nav('#t-tri');
+  expect('tri topic 40 problem chips', d.querySelectorAll('.pchip').length === 40);
+  await nav('#l-tri-l6');
+  expect('lesson figure rendered', !!d.querySelector('.lessonbody svg.fig line') && d.querySelector('.lessonbody svg.fig').getAttribute('aria-label').includes('параллелограмм'));
+  await nav('#p-tri-24');
+  expect('statement figure with filled polygon and labels', !!d.querySelector('.stmt svg.fig polygon.fl') && [...d.querySelectorAll('.stmt svg.fig text')].some(t => t.textContent === 'A1'));
+  submit('[data-form="ans"]', 'ans', '20');
+  expect('tri-24 answer accepted', state().att['tri-24'] && state().att['tri-24'].st === 'clean');
+
   // deep problem page
   await nav('#p-div-43');
   expect('deep problem pill', [...d.querySelectorAll('.phead .pill')].some(x => x.textContent === 'глубокий уровень'));
@@ -183,7 +193,7 @@ function expect(name, cond) { checks.push([name, !!cond]); }
 
   // second topic: two-storey fractions render and answers work
   await nav('#map');
-  expect('map shows ready count', text().includes('Готово 3 из 45'));
+  expect('map shows ready count', text().includes('Готово 4 из 45'));
   expect('map shows grade pills', text().includes('7 класс'));
   await nav('#t-alg-expr');
   expect('alg-expr 55 problem chips, 15 deep', d.querySelectorAll('.pchip').length === 55 && d.querySelectorAll('.pchip .dp').length === 15);
