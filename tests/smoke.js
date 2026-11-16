@@ -158,7 +158,16 @@ function expect(name, cond) { checks.push([name, !!cond]); }
 
   // topic «Треугольники»: figures in lessons and statements (F2)
   await nav('#t-tri');
-  expect('tri topic 40 problem chips', d.querySelectorAll('.pchip').length === 40);
+  expect('tri topic 55 problem chips, 15 deep', d.querySelectorAll('.pchip').length === 55 && d.querySelectorAll('.pchip .dp').length === 15);
+  expect('tri 3 deep lessons', d.querySelectorAll('.deephead + .lessons .lesson').length === 3);
+  await nav('#l-tri-l8');
+  expect('trillium figure: two circles and subscript label', d.querySelectorAll('.lessonbody svg.fig circle.s').length === 2 && !!d.querySelector('.lessonbody svg.fig text tspan.fs'));
+  await nav('#l-tri-l7');
+  const nineFig = d.querySelectorAll('.lessonbody svg.fig')[1];
+  expect('nine-point figure: 14 points, 8 labels', nineFig && nineFig.querySelectorAll('circle.p').length === 14 && nineFig.querySelectorAll('text.t').length === 8);
+  await nav('#p-tri-45');
+  submit('[data-form="ans"]', 'ans', '4,0625');
+  expect('tri-45 decimal-comma answer accepted', state().att['tri-45'] && state().att['tri-45'].st === 'clean');
   await nav('#l-tri-l6');
   expect('lesson figure rendered', !!d.querySelector('.lessonbody svg.fig line') && d.querySelector('.lessonbody svg.fig').getAttribute('aria-label').includes('параллелограмм'));
   await nav('#p-tri-24');
