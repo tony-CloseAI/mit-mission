@@ -186,7 +186,8 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   expect('map shows ready count', text().includes('Готово 3 из 45'));
   expect('map shows grade pills', text().includes('7 класс'));
   await nav('#t-alg-expr');
-  expect('alg-expr 40 problem chips', d.querySelectorAll('.pchip').length === 40);
+  expect('alg-expr 55 problem chips, 15 deep', d.querySelectorAll('.pchip').length === 55 && d.querySelectorAll('.pchip .dp').length === 15);
+  expect('alg-expr 3 deep lessons', d.querySelectorAll('.deephead + .lessons .lesson').length === 3);
   await nav('#l-expr-l3');
   expect('lesson renders fractions', d.querySelectorAll('.lessonbody .fr').length >= 5);
   await nav('#p-expr-09');
