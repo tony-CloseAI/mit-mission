@@ -11,7 +11,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-CONTENT_FILES = ["roadmap.js", "diagnostic.js", "divisibility.js"]
+CONTENT_FILES = ["roadmap.js", "diagnostic.js", "divisibility.js", "alg-expr.js"]
 MARK = "<!--@CONTENT@-->"
 ROOT_DIV = '<div id="root"></div>'
 

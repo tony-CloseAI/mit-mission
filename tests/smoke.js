@@ -139,8 +139,30 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   click('[data-act="proof-grade"]');
   expect('proof 0 -> bad', state().att['div-32'].st === 'bad');
 
+  // second topic: two-storey fractions render and answers work
+  await nav('#map');
+  expect('map shows ready count', text().includes('Готово 2 из 45'));
+  expect('map shows grade pills', text().includes('7 класс'));
+  await nav('#t-alg-expr');
+  expect('alg-expr 40 problem chips', d.querySelectorAll('.pchip').length === 40);
+  await nav('#l-expr-l3');
+  expect('lesson renders fractions', d.querySelectorAll('.lessonbody .fr').length >= 5);
+  await nav('#p-expr-09');
+  expect('statement fraction', !!d.querySelector('.stmt .fr'));
+  submit('[data-form="ans"]', 'ans', '4');
+  expect('expr-09 correct', state().att['expr-09'] && state().att['expr-09'].st === 'clean');
+  await nav('#p-expr-15');
+  submit('[data-form="ans"]', 'ans', '0,5');
+  expect('comma decimal accepted', state().att['expr-15'].st === 'clean');
+  await nav('#p-expr-17');
+  submit('[data-form="ans"]', 'ans', '−1');
+  expect('unicode minus accepted', state().att['expr-17'].st === 'clean');
+  expect('last topic remembered', state().lastTopic === 'alg-expr');
+
   // today after work
   await nav('#today');
+  expect('continue card follows last topic', [...d.querySelectorAll('.grid4 .card')].some(c => c.textContent.includes('Продолжить') && c.textContent.includes('Выражения и тождества')));
+  expect('backup reminder after 10 rated problems', text().includes('Резервная копия'));
   expect('today streak/day count', text().includes('Решено сегодня'));
   expect('review card shows due 0 today (due tomorrow)', text().includes('На сегодня всё повторено'));
   expect('chart svg drawn', !!$('[data-chart] svg'));

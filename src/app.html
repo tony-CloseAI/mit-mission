@@ -99,6 +99,12 @@ h2{font-size:21px;font-weight:650;letter-spacing:-.01em}
 .goals .gs{grid-column:1/-1;font-size:13px;color:var(--ink-3)}
 .goals li.done .gs{color:var(--good)}
 .next{margin-top:auto;padding-top:10px;font-size:15px}
+/* two-storey fractions and radicals (F7) */
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:.9em;line-height:1.2;margin:0 .12em}
+.fr>span{padding:0 .2em;white-space:nowrap}
+.fr>span:first-child{border-bottom:1px solid currentColor}
+.sq{white-space:nowrap}
+.sq>span{border-top:1px solid currentColor;padding:0 .1em;margin-left:.05em}
 .next b{font-family:var(--font-num)}
 .chart{position:relative;min-height:170px}
 .chart svg{display:block}
@@ -310,7 +316,8 @@ window.MM = { topics: [], diag: null, roadmap: [],
   'use strict';
   var MM = window.MM;
   var KEY = 'mit-mission-v1';
-  var SEC = { nt: 'Теория чисел', alg: 'Алгебра', geo: 'Геометрия', comb: 'Комбинаторика', mock: 'Пробные олимпиады' };
+  var SEC = { base: 'Школьная база', meth: 'Олимпиадные методы', nt: 'Теория чисел', alg: 'Алгебра', geo: 'Геометрия', trig: 'Тригонометрия и анализ', comb: 'Комбинаторика', mock: 'Пробные олимпиады' };
+  var DIAG_SEC = { nt: 'Теория чисел', alg: 'Алгебра', geo: 'Геометрия', comb: 'Комбинаторика' };
   var LV = { 1: ['База', 'школьный уровень · тест'], 2: ['Районный этап', 'тест'], 3: ['Полуфинал', 'тест'], 4: ['Финал', 'доказательства'], 5: ['Международный', 'доказательства'] };
   var STAGES = [
     { r: 1100, name: 'Школьная база', short: 'База' },
@@ -343,7 +350,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
   // ---------- storage ----------
   var storageOK = true;
   function fresh() {
-    return { v: 1, rating: null, peak: null, n: 0, hist: [], att: {}, rev: {}, time: {}, days: {}, daily: {}, weekly: {}, diag: null, diagRun: null, teacher: {}, drafts: {}, read: {}, goals: { from: {}, done: {} }, flash: null, notice: null };
+    return { v: 1, rating: null, peak: null, n: 0, hist: [], att: {}, rev: {}, time: {}, days: {}, daily: {}, weekly: {}, diag: null, diagRun: null, teacher: {}, drafts: {}, read: {}, goals: { from: {}, done: {} }, flash: null, notice: null, lastTopic: null, lastExport: null };
   }
   function load() {
     try {
@@ -661,7 +668,10 @@ window.MM = { topics: [], diag: null, roadmap: [],
     var dp = P[dId], wp = P[wId];
     var dDone = S.daily[today()] && S.daily[today()].done, wDone = S.weekly[weekKey()] && S.weekly[weekKey()].done;
     var due = dueList();
-    var t = T[MM.topics[0].id], ns = nextStep(t);
+    var t = T[S.lastTopic] || MM.topics[0], ns = nextStep(t);
+    var backup = S.n >= 10 && (!S.lastExport || Date.now() - S.lastExport > 14 * 86400000)
+      ? '<section class="panel" style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between"><div><div class="lab">Резервная копия</div><p style="margin:4px 0 0">Прогресс хранится только в этом браузере. Раз в две недели сохраняй код прогресса — например, отправь его себе в сообщения.</p></div><a class="btn ghost small" href="#me">Сохранить код</a></section>'
+      : '';
     var ws = weekSec(), st = streak();
 
     var goal = currentGoal();
@@ -700,18 +710,21 @@ window.MM = { topics: [], diag: null, roadmap: [],
       '<div class="stat-row"><span>Дней подряд</span><b>' + st + '</b></div>' +
       '<div class="stat-row"><span>Решено сегодня</span><b>' + (S.days[today()] || 0) + '</b></div></section>';
 
-    return hero + ladder(r) + cards + '<div class="row2">' + week + countdown() + '</div>';
+    return hero + ladder(r) + cards + backup + '<div class="row2">' + week + countdown() + '</div>';
   }
-  function topicRow(t) {
+  function gradePill(it) { return it && it.grades ? '<span class="pill">' + (/^\d/.test(it.grades) ? it.grades + ' класс' : it.grades) + '</span>' : ''; }
+  function topicRow(t, it) {
     var solved = solvedIn(t.problems);
-    return '<li><a class="mitem" href="#t-' + t.id + '"><span class="mt">' + t.title + '</span><span class="mprog"><span class="bar"><i style="width:' + (solved / t.problems.length * 100) + '%"></i></span>' + solved + '/' + t.problems.length + '</span></a></li>';
+    return '<li><a class="mitem" href="#t-' + t.id + '"><span class="mt">' + t.title + '</span>' + gradePill(it) + '<span class="mprog"><span class="bar"><i style="width:' + (solved / t.problems.length * 100) + '%"></i></span>' + solved + '/' + t.problems.length + '</span></a></li>';
   }
   function vMap() {
-    return '<div><h1 class="pg">Темы</h1><p class="pg-sub">По официальной программе Республиканской олимпиады по математике. Сейчас готова первая тема, остальные будут появляться здесь по очереди.</p></div>' +
+    var all = 0, ready = 0;
+    MM.roadmap.forEach(function (sec) { sec.items.forEach(function (it) { all++; if (it.id && T[it.id]) ready++; }); });
+    return '<div><h1 class="pg">Темы</h1><p class="pg-sub">Вся школьная математика с 1 по 11 класс и олимпиадные темы по программе Республиканской олимпиады. Готово ' + ready + ' из ' + all + ' — новые темы появляются здесь по очереди.</p></div>' +
       MM.roadmap.map(function (sec) {
         return '<section class="msec"><h2>' + sec.title + '</h2><ul class="mlist">' + sec.items.map(function (it) {
-          if (it.id && T[it.id]) return topicRow(T[it.id]);
-          return '<li class="mitem soon"><span class="mt">' + it.title + '</span>' + (it.note ? '<span class="pill">' + it.note + '</span>' : '') + '<span class="pill">скоро</span></li>';
+          if (it.id && T[it.id]) return topicRow(T[it.id], it);
+          return '<li class="mitem soon"><span class="mt">' + it.title + '</span>' + gradePill(it) + (it.note ? '<span class="pill">' + it.note + '</span>' : '') + '<span class="pill">скоро</span></li>';
         }).join('') + '</ul></section>';
       }).join('');
   }
@@ -888,7 +901,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
         '<p style="margin:0">Результат перенесён с устройства, на котором проходила диагностика. Разбор отдельных задач остался там.</p></section>' +
         '<div class="actions"><a class="btn" href="#t-div">Перейти к теме</a><button class="btn ghost" type="button" data-act="diag-restart">Пройти заново</button></div>';
     }
-    var rows = Object.keys(SEC).filter(function (k) { return d.bySec[k]; }).map(function (k) {
+    var rows = Object.keys(DIAG_SEC).filter(function (k) { return d.bySec[k]; }).map(function (k) {
       var v = d.bySec[k];
       return '<div><div class="stat-row"><span>' + SEC[k] + '</span><b>' + v[0] + '/' + v[1] + '</b></div><div class="bar"><i style="width:' + (v[0] / v[1] * 100) + '%"></i></div></div>';
     }).join('');
@@ -1021,6 +1034,8 @@ window.MM = { topics: [], diag: null, roadmap: [],
   var lastView = '';
   function render() {
     route = parseRoute();
+    var lt = route.view === 'topic' ? route.id : route.view === 'problem' && P[route.id] ? P[route.id].topic : route.view === 'lesson' && findLesson(route.id) ? findLesson(route.id).t.id : null;
+    if (lt && T[lt] && S.lastTopic !== lt) { S.lastTopic = lt; save(); }
     var body;
     if (route.view === 'problem') body = vProblem(route.id);
     else if (route.view === 'topic') body = vTopic(route.id);
@@ -1133,7 +1148,8 @@ window.MM = { topics: [], diag: null, roadmap: [],
     else if (act === 'copy') {
       var ex = document.getElementById('exp'), msg = document.getElementById('copymsg');
       var p2 = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(ex.value) : Promise.reject();
-      p2.then(function () { msg.textContent = 'Скопировано'; }, function () { ex.focus(); ex.select(); msg.textContent = 'Код выделен — скопируй его вручную (Ctrl+C)'; });
+      S.lastExport = Date.now(); save();
+      p2.then(function () { msg.textContent = 'Скопировано. Сохрани код в надёжном месте.'; }, function () { ex.focus(); ex.select(); msg.textContent = 'Код выделен — скопируй его вручную (Ctrl+C)'; });
     }
     else if (act === 'import') {
       var im = document.getElementById('imp'), m2 = document.getElementById('impmsg');
