@@ -139,9 +139,28 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   click('[data-act="proof-grade"]');
   expect('proof 0 -> bad', state().att['div-32'].st === 'bad');
 
+  // topic «Как доказывать»: lessons, Yes/No choice, number answer, rubric with roots
+  await nav('#t-proof');
+  expect('proof topic 40 problem chips', d.querySelectorAll('.pchip').length === 40);
+  expect('proof topic 6 lessons', d.querySelectorAll('a.lesson[href^="#l-proof-l"]').length === 6);
+  await nav('#l-proof-l4');
+  expect('proof lesson renders roots and fractions', d.querySelectorAll('.lessonbody .sq').length >= 2 && d.querySelectorAll('.lessonbody .fr').length >= 2);
+  await nav('#p-proof-17');
+  d.dispatchEvent(new w.KeyboardEvent('keydown', { key: '2', bubbles: true }));
+  expect('proof-17 «Нет» accepted', state().att['proof-17'] && state().att['proof-17'].st === 'clean');
+  await nav('#p-proof-10');
+  submit('[data-form="ans"]', 'ans', ' 9 ');
+  expect('proof-10 answer accepted', state().att['proof-10'] && state().att['proof-10'].st === 'clean');
+  await nav('#p-proof-29');
+  click('[data-act="proof-check"]');
+  expect('proof-29 rubric has 4 items with a root', d.querySelectorAll('[data-rub]').length === 4 && !!d.querySelector('label .sq, .rub .sq, [data-rub] ~ * .sq, .proofbox .sq'));
+  [0, 1, 2, 3].forEach(i => { const cb = d.querySelector('[data-rub="' + i + '"]'); cb.checked = true; cb.dispatchEvent(new w.Event('change', { bubbles: true })); });
+  click('[data-act="proof-grade"]');
+  expect('proof-29 graded 7/7 -> clean', state().att['proof-29'].pts === 7 && state().att['proof-29'].st === 'clean');
+
   // second topic: two-storey fractions render and answers work
   await nav('#map');
-  expect('map shows ready count', text().includes('Готово 2 из 45'));
+  expect('map shows ready count', text().includes('Готово 3 из 45'));
   expect('map shows grade pills', text().includes('7 класс'));
   await nav('#t-alg-expr');
   expect('alg-expr 40 problem chips', d.querySelectorAll('.pchip').length === 40);

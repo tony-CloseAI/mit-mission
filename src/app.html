@@ -105,6 +105,7 @@ h2{font-size:21px;font-weight:650;letter-spacing:-.01em}
 .fr>span:first-child{border-bottom:1px solid currentColor}
 .sq{white-space:nowrap}
 .sq>span{border-top:1px solid currentColor;padding:0 .1em;margin-left:.05em}
+.nw{white-space:nowrap}
 .next b{font-family:var(--font-num)}
 .chart{position:relative;min-height:170px}
 .chart svg{display:block}
@@ -201,7 +202,7 @@ a.mitem:hover{border-color:var(--rule-2)}
 .lessonbody h3{font-size:19px;margin:26px 0 8px}
 .lessonbody p{margin:0 0 12px}
 .lessonbody ol,.lessonbody ul{margin:0 0 12px;padding-left:22px;display:grid;gap:6px}
-.lessonbody .m{white-space:normal}
+.lessonbody .m.long{white-space:normal}
 .box,.ex,.trick{border-radius:12px;padding:16px 18px;margin:18px 0}
 .box{background:var(--surface);border:1px solid var(--rule)}
 .ex{background:var(--surface-2);border:1px solid var(--rule)}
@@ -1048,7 +1049,13 @@ window.MM = { topics: [], diag: null, roadmap: [],
     var key = location.hash;
     if (key !== lastView) { window.scrollTo(0, 0); lastView = key; }
     drawCharts();
+    markLongMath();
     tickTimer();
+  }
+  // короткие формулы в уроках не переносим, длинным разрешаем перенос, чтобы они не вылезали за экран телефона
+  function markLongMath() {
+    var els = document.querySelectorAll('.lessonbody .m');
+    for (var i = 0; i < els.length; i++) if (els[i].textContent.length > 24) els[i].classList.add('long');
   }
   function go(h) { if (location.hash === h) render(); else location.hash = h; }
 
