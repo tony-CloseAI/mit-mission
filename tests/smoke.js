@@ -164,8 +164,8 @@ function expect(name, cond) { checks.push([name, !!cond]); }
 
   // topic «Как доказывать»: lessons, Yes/No choice, number answer, rubric with roots
   await nav('#t-proof');
-  expect('proof topic 40 problem chips', d.querySelectorAll('.pchip').length === 40);
-  expect('proof topic 6 lessons', d.querySelectorAll('a.lesson[href^="#l-proof-l"]').length === 6);
+  expect('proof topic 55 problem chips, 15 deep', d.querySelectorAll('.pchip').length === 55 && d.querySelectorAll('.pchip .dp').length === 15);
+  expect('proof topic 9 lessons (6 + 3 deep)', d.querySelectorAll('a.lesson[href^="#l-proof-l"]').length === 9);
   await nav('#l-proof-l4');
   expect('proof lesson renders roots and fractions', d.querySelectorAll('.lessonbody .sq').length >= 2 && d.querySelectorAll('.lessonbody .fr').length >= 2);
   await nav('#p-proof-17');
