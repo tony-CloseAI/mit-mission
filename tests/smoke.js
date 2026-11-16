@@ -206,12 +206,19 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   expect('continue card follows last topic', [...d.querySelectorAll('.grid4 .card')].some(c => c.textContent.includes('Продолжить') && c.textContent.includes('Выражения и тождества')));
   expect('backup reminder after 10 rated problems', text().includes('Резервная копия'));
   expect('today streak/day count', text().includes('Решено сегодня'));
+  expect('weekly goal 10 h by default', text().includes('Цель — 10 ч за 7 дней'));
   expect('review card shows due 0 today (due tomorrow)', text().includes('На сегодня всё повторено'));
   expect('chart svg drawn', !!$('[data-chart] svg'));
 
   // profile + export/import roundtrip
   await nav('#me');
   expect('teacher list has item', d.querySelectorAll('.tlist li').length === 1);
+  expect('hours section with 8 weeks', d.querySelectorAll('.weeks li').length === 8 && $('[data-act="wgoal"][aria-pressed="true"]').textContent === '10 ч');
+  click('[data-act="wgoal"][data-h="12"]');
+  expect('weekly goal changed to 12', state().weekGoal === 12 && $('[data-act="wgoal"][aria-pressed="true"]').textContent === '12 ч');
+  await nav('#today');
+  expect('today shows new weekly goal', text().includes('Цель — 12 ч за 7 дней'));
+  await nav('#me');
   const code = d.getElementById('exp').value;
   expect('export code', code.startsWith('MM1:') && code.length > 100);
   const snapshot = JSON.stringify(state().att);

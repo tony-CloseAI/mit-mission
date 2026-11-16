@@ -95,6 +95,14 @@ h2{font-size:21px;font-weight:650;letter-spacing:-.01em}
 .goals li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:baseline;padding:10px 14px;border:1px solid var(--rule);border-radius:10px;background:var(--surface)}
 .goals li.now{border-color:var(--gold-fill);box-shadow:inset 0 0 0 1px var(--gold-soft)}
 .goals .gn{font-weight:600}
+.weeks{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-width:640px}
+.weeks li{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 56px;gap:12px;align-items:center;font-size:14px}
+.weeks .wl,.weeks .wv{white-space:nowrap}
+.weeks .wl{color:var(--ink-3)}
+.weeks .bar{display:block}
+@media (max-width:560px){.weeks li{grid-template-columns:minmax(0,128px) minmax(0,1fr) 52px;gap:8px;font-size:13px}}
+.weeks .wv{font-family:var(--font-num);text-align:right}
+[data-act="wgoal"][aria-pressed="true"]{border-color:var(--gold-fill);background:var(--gold-soft);color:var(--ink)}
 .goals .gr{font-family:var(--font-num);font-weight:700}
 .goals .gs{grid-column:1/-1;font-size:13px;color:var(--ink-3)}
 .goals li.done .gs{color:var(--good)}
@@ -345,7 +353,10 @@ window.MM = { topics: [], diag: null, roadmap: [],
     { d: new Date(2027, 11, 1), name: 'Районный этап', note: 'декабрь 2027 — январь 2028' },
     { d: new Date(2028, 3, 9), name: 'Финал RFO', note: 'ориентир: второе воскресенье апреля 2028' }
   ];
-  var WEEK_GOAL = 300;
+  var WEEK_OPTS = [5, 7, 10, 12, 15]; // часов в неделю
+  function weekGoalMin() { return (WEEK_OPTS.indexOf(S.weekGoal) >= 0 ? S.weekGoal : 10) * 60; }
+  // секунды за 7 дней, заканчивающихся днём end
+  function weekSecAt(end) { var s = 0, d = end; for (var i = 0; i < 7; i++) { s += S.time[d] || 0; d = addDays(d, -1); } return s; }
   var HINT_COST = 0.2;
   var MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
   var KEYS = ['√', '²', '³', 'ⁿ', '·', '±', '≤', '≥', '≠', '≡', '∣', '∤', '⇒', '⇔', '∈', 'ℕ', 'ℤ', '∀', '∃', '∠', '△', '°', 'π', '∞', '⌊', '⌋', '₁', '₂', 'ₖ', 'ₙ'];
@@ -362,7 +373,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
   // ---------- storage ----------
   var storageOK = true;
   function fresh() {
-    return { v: 1, rating: null, peak: null, n: 0, hist: [], att: {}, rev: {}, time: {}, days: {}, daily: {}, weekly: {}, diag: null, diagRun: null, teacher: {}, drafts: {}, read: {}, goals: { from: {}, done: {} }, flash: null, notice: null, lastTopic: null, lastExport: null };
+    return { v: 1, rating: null, peak: null, n: 0, hist: [], att: {}, rev: {}, time: {}, days: {}, daily: {}, weekly: {}, diag: null, diagRun: null, teacher: {}, drafts: {}, read: {}, goals: { from: {}, done: {} }, flash: null, notice: null, lastTopic: null, lastExport: null, weekGoal: 10 };
   }
   function load() {
     try {
@@ -469,7 +480,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
   }
   function markDay() { var k = today(); S.days[k] = (S.days[k] || 0) + 1; }
   function streak() { var d = today(); if (!S.days[d]) d = addDays(d, -1); var n = 0; while (S.days[d]) { n++; d = addDays(d, -1); } return n; }
-  function weekSec() { var s = 0, d = today(); for (var i = 0; i < 7; i++) { s += S.time[d] || 0; d = addDays(d, -1); } return s; }
+  function weekSec() { return weekSecAt(today()); }
   function reviewStep(id, good) {
     var r = S.rev[id]; if (!r) return;
     if (!good) { r.step = 0; r.due = addDays(today(), 1); return; }
@@ -723,8 +734,8 @@ window.MM = { topics: [], diag: null, roadmap: [],
 
     var week = '<section class="panel"><div class="lab">Эта неделя</div>' +
       '<div class="stat-row" style="margin-top:10px"><span>Время на математику</span><b>' + mins(ws) + '</b></div>' +
-      '<div class="bar goldbar" role="img" aria-label="' + Math.round(ws / 60) + ' из ' + WEEK_GOAL + ' минут"><i style="width:' + Math.min(100, ws / 60 / WEEK_GOAL * 100) + '%"></i></div>' +
-      '<p class="small" style="margin:6px 0 14px">Цель — 5 часов в неделю. Время считается, пока открыта задача или урок.</p>' +
+      '<div class="bar goldbar" role="img" aria-label="' + Math.round(ws / 60) + ' из ' + weekGoalMin() + ' минут"><i style="width:' + Math.min(100, ws / 60 / weekGoalMin() * 100) + '%"></i></div>' +
+      '<p class="small" style="margin:6px 0 14px">' + (ws / 60 >= weekGoalMin() ? 'Цель недели выполнена — ' + weekGoalMin() / 60 + ' ч. ' : 'Цель — ' + weekGoalMin() / 60 + ' ч за 7 дней, осталось ' + mins(weekGoalMin() * 60 - ws) + '. ') + 'Время идёт, пока открыта задача или урок, и когда решаешь на бумаге. <a href="#me">Изменить цель</a></p>' +
       '<div class="stat-row"><span>Дней подряд</span><b>' + st + '</b></div>' +
       '<div class="stat-row"><span>Решено сегодня</span><b>' + (S.days[today()] || 0) + '</b></div></section>';
 
@@ -950,6 +961,25 @@ window.MM = { topics: [], diag: null, roadmap: [],
       '<section class="msec"><h2>Задачи и решения</h2><ul class="reslist">' + list + '</ul></section>';
   }
 
+  var MON_S = ['янв.', 'февр.', 'мар.', 'апр.', 'мая', 'июн.', 'июл.', 'авг.', 'сент.', 'окт.', 'нояб.', 'дек.'];
+  function weekRange(a, b) {
+    var x = a.split('-').map(Number), y = b.split('-').map(Number);
+    return x[1] === y[1] ? x[2] + '–' + y[2] + ' ' + MON_S[y[1] - 1] : x[2] + ' ' + MON_S[x[1] - 1] + ' – ' + y[2] + ' ' + MON_S[y[1] - 1];
+  }
+  function hoursSection() {
+    var g = weekGoalMin() / 60;
+    var btns = WEEK_OPTS.map(function (h) { return '<button class="btn ghost small" type="button" data-act="wgoal" data-h="' + h + '" aria-pressed="' + (h === g) + '">' + h + ' ч</button>'; }).join('');
+    var rows = '', d = today();
+    for (var i = 0; i < 8; i++) {
+      var sec = weekSecAt(d), w = Math.min(100, sec / 60 / (g * 60) * 100);
+      rows += '<li><span class="wl">' + (i === 0 ? 'последние 7 дней' : weekRange(addDays(d, -6), d)) + '</span>' +
+        '<span class="bar' + (sec / 60 >= g * 60 ? ' goldbar' : '') + '"><i style="width:' + Math.max(sec ? 2 : 0, Math.round(w)) + '%"></i></span><span class="wv">' + String(Math.round(sec / 360) / 10).replace('.', ',') + ' ч</span></li>';
+      d = addDays(d, -7);
+    }
+    return '<section class="msec"><h2>Часы в неделю</h2><p class="small" style="margin:0">Чтобы до финала в апреле 2028 пройти всю программу вместе с глубоким уровнем, нужно около 10 часов в учебные недели и 15 часов в каникулы. Перед этапами олимпиады — 12–14 часов.</p>' +
+      '<div class="actions" role="group" aria-label="Цель часов в неделю">' + btns + '</div>' +
+      '<ul class="weeks">' + rows + '</ul></section>';
+  }
   function vMe() {
     var r = S.rating, solved = ALL.filter(function (p) { var s = status(p.id); return s === 'clean' || s === 'ok'; }).length;
     var atts = Object.keys(S.att).filter(function (k) { return P[k]; }).map(function (k) { return S.att[k]; });
@@ -965,7 +995,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
       '<div class="hero-sub">Пик ' + (S.peak || '—') + ' · ' + S.n + ' ' + plural(S.n, 'задача', 'задачи', 'задач') + ' в рейтинге</div></div><div class="chart" data-chart="big"></div></div></section>' +
       '<section class="tiles"><div class="tile"><span>Решено задач</span><b>' + solved + '/' + ALL.length + '</b></div><div class="tile"><span>С первой попытки</span><b>' + first + '%</b></div>' +
       '<div class="tile"><span>Эта неделя</span><b>' + mins(weekSec()) + '</b></div><div class="tile"><span>Дней подряд</span><b>' + streak() + '</b></div></section>' +
-      goalsSection() +
+      goalsSection() + hoursSection() +
       '<section class="msec"><h2>Для учителя</h2><p class="small" style="margin:0">Задачи, которые ты отметил, вместе с твоими черновиками. Покажи их учителю математики.</p>' + tl + '</section>' +
       '<section class="msec"><h2>Диагностика</h2>' + (S.diag ? '<p style="margin:0">Стартовый рейтинг ' + S.diag.perf + ' (' + fmtShort(S.diag.ts) + '). <a href="#diag">Подробнее</a></p>' : '<p style="margin:0"><a href="#diag">Пройти диагностику</a></p>') + '</section>' +
       '<section class="msec"><h2>Перенос на другое устройство</h2><p class="small" style="margin:0">Прогресс хранится в этом браузере. Чтобы продолжить на телефоне или другом компьютере, скопируй код и вставь его там.</p>' +
@@ -1100,7 +1130,8 @@ window.MM = { topics: [], diag: null, roadmap: [],
   var lastAct = Date.now(), ticks = 0;
   ['pointerdown', 'keydown', 'scroll', 'input'].forEach(function (ev) { window.addEventListener(ev, function () { lastAct = Date.now(); }, { passive: true }); });
   setInterval(function () {
-    if (document.visibilityState !== 'visible' || Date.now() - lastAct > 120000) return;
+    // до 10 минут без касаний: он может думать над задачей на бумаге
+    if (document.visibilityState !== 'visible' || Date.now() - lastAct > 600000) return;
     if (['problem', 'lesson', 'diag'].indexOf(route.view) < 0) return;
     var k = today(); S.time[k] = (S.time[k] || 0) + 15; ticks++;
     if (ticks % 4 === 0) save();
@@ -1163,6 +1194,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     else if (act === 'retry') { cur.phase = 'solve'; cur.result = null; cur.picked = null; render(); }
     else if (act === 'giveup') giveUp(cur.id);
     else if (act === 'teacher') { S.teacher[cur.id] = !S.teacher[cur.id]; save(); render(); }
+    else if (act === 'wgoal') { S.weekGoal = Number(b.getAttribute('data-h')); save(); render(); }
     else if (act === 'unflag') { delete S.teacher[b.getAttribute('data-id')]; save(); render(); }
     else if (act === 'notice-ok') { S.notice = null; save(); render(); }
     else if (act === 'flash-ok') { S.flash = null; save(); render(); }
