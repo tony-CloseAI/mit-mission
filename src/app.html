@@ -330,13 +330,30 @@ textarea.draft:focus{outline:none;border-color:var(--ink)}
 <div id="root"></div>
 <script>
 window.MM = { topics: [], diag: null, roadmap: [],
-  addTopic: function (t) { this.topics.push(t); },
+  byId: function (id) { return this.topics.filter(function (x) { return x.id === id; })[0]; },
+  // На сайте сначала приходит оглавление тем (addStubs): всё, кроме текстов уроков, подсказок, решений и критериев.
+  // Файл темы подгружается позже и дописывает недостающее в те же объекты, поэтому ссылки на задачи не меняются.
+  addStubs: function (list) { var mm = this; list.forEach(function (t) { t.loaded = false; mm.topics.push(t); }); },
+  merge: function (list, items, deep) {
+    items.forEach(function (x) {
+      if (deep) x.deep = true;
+      var old = list.filter(function (y) { return y.id === x.id; })[0];
+      if (old) { for (var k in x) old[k] = x[k]; } else list.push(x);
+    });
+  },
+  addTopic: function (t) {
+    var s = this.byId(t.id);
+    if (!s) { t.loaded = true; this.topics.push(t); return; }
+    for (var k in t) if (k !== 'lessons' && k !== 'problems') s[k] = t[k];
+    this.merge(s.lessons, t.lessons || [], false);
+    this.merge(s.problems, t.problems || [], false);
+  },
   // глубокий уровень темы лежит в отдельном файле и дописывается к теме: уроки и задачи помечаются deep
   addDeep: function (id, d) {
-    var t = this.topics.filter(function (x) { return x.id === id; })[0];
+    var t = this.byId(id);
     if (!t) throw new Error('addDeep: нет темы ' + id);
-    (d.lessons || []).forEach(function (l) { l.deep = true; t.lessons.push(l); });
-    (d.problems || []).forEach(function (p) { p.deep = true; t.problems.push(p); });
+    this.merge(t.lessons, d.lessons || [], true);
+    this.merge(t.problems, d.problems || [], true);
   },
   setDiagnostic: function (d) { this.diag = d; },
   setRoadmap: function (r) { this.roadmap = r; } };
@@ -1102,12 +1119,43 @@ window.MM = { topics: [], diag: null, roadmap: [],
   // ---------- render ----------
   var root = document.getElementById('root');
   var lastView = '';
+
+  // ---------- подгрузка тем (F3) ----------
+  // На сайте тема приходит в два шага: оглавление сразу, а тексты уроков и решения — отдельным файлом t.src.
+  // В предпросмотре всё уже внутри страницы (loaded = true), и здесь ничего не происходит.
+  var waiting = {}, failed = {};
+  function ensureTopic(id, done) {
+    var t = T[id];
+    if (!t || t.loaded !== false) { done(true); return; }
+    if (waiting[id]) { waiting[id].push(done); return; }
+    waiting[id] = [done];
+    var s = document.createElement('script');
+    function finish(ok) { var cbs = waiting[id]; delete waiting[id]; if (ok) t.loaded = true; else { failed[id] = true; s.parentNode && s.parentNode.removeChild(s); } cbs.forEach(function (f) { f(ok); }); }
+    s.src = t.src;
+    s.onload = function () { finish(true); };
+    s.onerror = function () { finish(false); };
+    document.head.appendChild(s);
+  }
+  function vLoading(id) {
+    var t = T[id];
+    if (failed[id]) return '<section class="panel" data-loadfail><h1 class="pg" style="margin-top:0">Не удалось загрузить тему</h1><p>Тема «' + t.title + '» не загрузилась. Проверь интернет и попробуй ещё раз; если не поможет — обнови страницу. Прогресс не пропадёт.</p><div class="actions"><button class="btn" type="button" data-act="reload-topic" data-id="' + id + '">Попробовать снова</button><a class="btn ghost" href="#today">На главную</a></div></section>';
+    return '<section class="panel" data-loading aria-live="polite"><p style="margin:0">Загружаю тему «' + t.title + '»…</p></section>';
+  }
+
   function render() {
     route = parseRoute();
     var lt = route.view === 'topic' ? route.id : route.view === 'problem' && P[route.id] ? P[route.id].topic : route.view === 'lesson' && findLesson(route.id) ? findLesson(route.id).t.id : null;
     if (lt && T[lt] && S.lastTopic !== lt) { S.lastTopic = lt; save(); }
+    // уроку и задаче нужен файл темы; странице темы хватает оглавления, но файл заранее подгружаем
+    var need = lt && T[lt] && T[lt].loaded === false && (route.view === 'problem' || route.view === 'lesson') ? lt : null;
+    if (lt && T[lt] && T[lt].loaded === false && route.view === 'topic' && !failed[lt]) ensureTopic(lt, function () {});
+    if (need && !failed[need]) {
+      var h0 = location.hash;
+      ensureTopic(need, function () { if (location.hash === h0) render(); });
+    }
     var body;
-    if (route.view === 'problem') body = vProblem(route.id);
+    if (need) body = vLoading(need);
+    else if (route.view === 'problem') body = vProblem(route.id);
     else if (route.view === 'topic') body = vTopic(route.id);
     else if (route.view === 'lesson') body = vLesson(route.id);
     else if (route.view === 'map') body = vMap();
@@ -1202,6 +1250,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     var act = b.getAttribute('data-act');
     if (act === 'opt') { var i = Number(b.getAttribute('data-i')); answerTest(cur.id, i === P[cur.id].a, i); }
     else if (act === 'hint') { cur.hints++; render(); }
+    else if (act === 'reload-topic') { delete failed[b.getAttribute('data-id')]; render(); }
     else if (act === 'retry') { cur.phase = 'solve'; cur.result = null; cur.picked = null; render(); }
     else if (act === 'giveup') giveUp(cur.id);
     else if (act === 'teacher') { S.teacher[cur.id] = !S.teacher[cur.id]; save(); render(); }
@@ -1243,7 +1292,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     if (route.view !== 'problem' || !cur) return;
     var tg = e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA') return;
     var p = P[cur.id];
-    if (p && p.type === 'choice' && cur.phase === 'solve' && /^[1-4]$/.test(e.key)) {
+    if (p && p.opts && T[p.topic].loaded !== false && p.type === 'choice' && cur.phase === 'solve' && /^[1-4]$/.test(e.key)) {
       var i = Number(e.key) - 1; if (i < p.opts.length) answerTest(cur.id, i === p.a, i);
     }
   });

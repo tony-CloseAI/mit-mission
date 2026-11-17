@@ -1,8 +1,23 @@
 // Проверка ссылки переноса (#start-1250) и целей: старт 1250, цель 1350, достижение цели, защита от перезаписи.
 // Запуск: node app/tests/smoke-goal.js app/docs/index.html   (нужен пакет jsdom)
 const fs = require('fs');
-const { JSDOM, VirtualConsole } = require('jsdom');
+const path = require('path');
+const { JSDOM, VirtualConsole, ResourceLoader } = require('jsdom');
 const util = require('util');
+// Сайт подгружает темы отдельными файлами (docs/t/…). Отдаём их с диска, как будто из сети.
+class LocalFiles extends ResourceLoader {
+  constructor(htmlFile) { super(); this.dir = path.dirname(path.resolve(htmlFile)); }
+  fetch(url, options) {
+    const base = 'https://app.test/';
+    if (url.startsWith(base)) {
+      const rel = decodeURIComponent(url.slice(base.length).split(/[?#]/)[0]).replace(/^mit-mission\//, '');
+      const pr = fs.promises.readFile(path.join(this.dir, rel));
+      pr.abort = () => {};
+      return pr;
+    }
+    return super.fetch(url, options);
+  }
+}
 
 const html = fs.readFileSync(process.argv[2], 'utf8');
 const errors = [];
@@ -15,7 +30,7 @@ function open(url, storage) {
   vc.on('jsdomError', e => { if (!/Not implemented/.test(e.message)) errors.push(e.message); });
   const isDoc = /^\s*<!doctype/i.test(html);
   const dom = new JSDOM(isDoc ? html : '<!doctype html><html><head><meta charset="utf-8"></head><body>' + html + '</body></html>', {
-    url, runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole: vc,
+    url, runScripts: 'dangerously', resources: new LocalFiles(process.argv[2]), pretendToBeVisual: true, virtualConsole: vc,
     beforeParse(w) {
       w.TextEncoder = util.TextEncoder; w.TextDecoder = util.TextDecoder; w.scrollTo = () => {};
       if (storage) w.localStorage.setItem('mit-mission-v1', storage);
@@ -51,6 +66,7 @@ function open(url, storage) {
   for (const id of ids) {
     if (S().rating >= 1350) break;
     w.location.hash = '#p-' + id; await sleep(30);
+    for (let i = 0; i < 300 && d.querySelector('[data-loading]'); i++) await sleep(10);
     const p = w.MM.topics[0].problems.find(x => x.id === id);
     d.getElementById('ans').value = p.a[0];
     d.querySelector('[data-form="ans"]').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));

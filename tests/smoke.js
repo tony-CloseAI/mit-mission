@@ -1,18 +1,33 @@
 // Smoke test: drives the built app like a user and fails on any runtime error.
 const fs = require('fs');
-const { JSDOM, VirtualConsole } = require('jsdom');
+const path = require('path');
+const { JSDOM, VirtualConsole, ResourceLoader } = require('jsdom');
 const util = require('util');
+// Сайт подгружает темы отдельными файлами (docs/t/…). Отдаём их с диска, как будто из сети.
+class LocalFiles extends ResourceLoader {
+  constructor(htmlFile) { super(); this.dir = path.dirname(path.resolve(htmlFile)); }
+  fetch(url, options) {
+    const base = 'https://app.test/';
+    if (url.startsWith(base)) {
+      const rel = decodeURIComponent(url.slice(base.length).split(/[?#]/)[0]).replace(/^mit-mission\//, '');
+      const pr = fs.promises.readFile(path.join(this.dir, rel));
+      pr.abort = () => {};
+      return pr;
+    }
+    return super.fetch(url, options);
+  }
+}
 
 const file = process.argv[2];
 const html = fs.readFileSync(file, 'utf8');
 const errors = [];
 const vc = new VirtualConsole();
-vc.on('jsdomError', e => { if (!/Not implemented/.test(e.message)) errors.push('jsdomError: ' + e.message + (e.detail ? ' ' + e.detail : '')); });
+vc.on('jsdomError', e => { if (!/Not implemented|t\/missing\.js/.test(e.message + (e.detail || ''))) errors.push('jsdomError: ' + e.message + (e.detail ? ' ' + e.detail : '')); });
 vc.on('error', e => errors.push('console.error: ' + e));
 
 const isDoc = /^\s*<!doctype/i.test(html);
 const dom = new JSDOM(isDoc ? html : '<!doctype html><html><head><meta charset="utf-8"></head><body>' + html + '</body></html>', {
-  url: 'https://app.test/', runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole: vc,
+  url: 'https://app.test/', runScripts: 'dangerously', resources: new LocalFiles(file), pretendToBeVisual: true, virtualConsole: vc,
   beforeParse(w) {
     w.TextEncoder = util.TextEncoder; w.TextDecoder = util.TextDecoder;
     w.scrollTo = () => {};
@@ -24,7 +39,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const $ = s => d.querySelector(s);
 const text = () => d.getElementById('root').textContent;
 const state = () => JSON.parse(w.localStorage.getItem('mit-mission-v1') || '{}');
-async function nav(h) { w.location.hash = h; await sleep(30); }
+// после перехода ждём, пока подгрузится файл темы (если он нужен)
+async function nav(h) { w.location.hash = h; await sleep(30); for (let i = 0; i < 300 && d.querySelector('[data-loading]'); i++) await sleep(10); }
 function click(sel) { const el = typeof sel === 'string' ? $(sel) : sel; if (!el) throw new Error('missing ' + sel); el.click(); }
 function submit(formSel, inputId, value) { d.getElementById(inputId).value = value; $(formSel).dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true })); }
 const checks = [];
@@ -58,6 +74,20 @@ function expect(name, cond) { checks.push([name, !!cond]); }
 
   await nav('#map');
   expect('map lists soon topics', d.querySelectorAll('.mitem.soon').length >= 15);
+
+  // F3: on the site topics arrive as a table of contents; lesson texts and solutions load per topic
+  const isSite = /^\s*<!doctype/i.test(html);
+  if (isSite) {
+    expect('site starts with table of contents only', w.MM.topics.every(t => t.loaded === false && t.src && t.lessons.every(l => !l.html) && t.problems.every(p => p.q && !p.sol)));
+    const cnt = w.MM.byId('count'), src0 = cnt.src;
+    cnt.src = 't/missing.js';
+    await nav('#l-cnt-l1');
+    expect('failed topic load shows retry screen', !!d.querySelector('[data-loadfail]') && !!d.querySelector('[data-act="reload-topic"]'));
+    cnt.src = src0;
+    click('[data-act="reload-topic"]');
+    await sleep(30); for (let i = 0; i < 300 && d.querySelector('[data-loading]'); i++) await sleep(10);
+    expect('retry loads the topic', cnt.loaded === true && d.querySelector('.lessonbody') && d.querySelector('.lessonbody').textContent.length > 300);
+  } else expect('preview has everything inline', w.MM.topics.every(t => t.loaded === true && t.lessons.every(l => l.html)));
 
   await nav('#t-div');
   expect('topic levels', d.querySelectorAll('.lvl').length === 5);
@@ -262,6 +292,14 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   expect('weekly goal 10 h by default', text().includes('Цель — 10 ч за 7 дней'));
   expect('review card shows due 0 today (due tomorrow)', text().includes('На сегодня всё повторено'));
   expect('chart svg drawn', !!$('[data-chart] svg'));
+
+  // every topic: first lesson and last problem render with full content (on the site — after loading)
+  for (const t of w.MM.topics) {
+    await nav('#l-' + t.lessons[0].id);
+    const lb = d.querySelector('.lessonbody');
+    await nav('#p-' + t.problems[t.problems.length - 1].id);
+    expect('topic ' + t.id + ': lesson and problem render', t.loaded === true && lb && lb.textContent.length > 300 && !!d.querySelector('.stmt') && !!d.querySelector('[data-act="hint"]'));
+  }
 
   // profile + export/import roundtrip
   await nav('#me');
