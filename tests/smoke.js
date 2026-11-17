@@ -238,6 +238,34 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   submit('[data-form="ans"]', 'ans', '55 252');
   expect('cnt-53 answer with a space accepted', state().att['cnt-53'] && state().att['cnt-53'].st === 'clean');
 
+  // F1: credit test per level — pass level 1, fail level 2
+  await nav('#t-count');
+  expect('topic offers a credit test link', !!d.querySelector('a.zlink[href="#z-count-1"]'));
+  await nav('#z-count-1');
+  expect('credit test intro', text().includes('Зачёт · уровень 1') && !!d.querySelector('[data-act="zstart"]'));
+  click('[data-act="zstart"]');
+  const zIds = state().zrun.ids, cntT = w.MM.byId('count');
+  expect('credit test picks 5 untried level-1 problems', zIds.length === 5 && zIds.every(id => cntT.problems.find(p => p.id === id).lvl === 1) && !zIds.includes('cnt-08'));
+  for (const id of zIds) {
+    const p = cntT.problems.find(x => x.id === id);
+    if (p.type === 'choice') click(d.querySelectorAll('[data-act="zopt"]')[p.a]);
+    else submit('[data-form="zans"]', 'zans', p.a[0]);
+  }
+  s = state();
+  expect('credit test passed and level credited', s.credit.count && s.credit.count[1] && s.credit.count[1].k === 5 && !s.zrun && text().includes('Зачёт сдан'));
+  expect('credit answers count as clean attempts', zIds.every(id => s.att[id] && s.att[id].st === 'clean' && s.att[id].z));
+  expect('credit result offers next level test', !!d.querySelector('a.btn[href="#z-count-2"]') && d.querySelectorAll('.reslist li').length === 5);
+  await nav('#z-count-2');
+  click('[data-act="zstart"]');
+  for (let i = 0; i < 5; i++) click('[data-act="zskip"]');
+  s = state();
+  expect('failed credit test: no credit, mistakes go to review, retry offered', !(s.credit.count && s.credit.count[2]) && s.zres.k === 0 && s.zres.ids.every(id => s.rev[id]) && !!d.querySelector('[data-act="zstart"]'));
+  await nav('#t-count');
+  const nsHref = d.querySelector('.actions .btn').getAttribute('href'), nsP = cntT.problems.find(p => '#p-' + p.id === nsHref);
+  expect('topic shows credited level; next step is not a level-1 problem', !!d.querySelector('.zpill') && (!nsP || nsP.lvl !== 1));
+  await nav('#map');
+  expect('map shows credit pill', [...d.querySelectorAll('.mitem .pill.good')].some(x => x.textContent === 'зачёт: уровень 1'));
+
   // deep problem page
   await nav('#p-div-43');
   expect('deep problem pill', [...d.querySelectorAll('.phead .pill')].some(x => x.textContent === 'глубокий уровень'));

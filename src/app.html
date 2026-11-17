@@ -196,6 +196,10 @@ a.mitem:hover{border-color:var(--rule-2)}
 .lvl-n{font-weight:600;font-size:15px}
 .lvl-n span{display:block;font-weight:400;font-size:13px;color:var(--ink-3)}
 .lvl-c{font-family:var(--font-num);font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.lvl-n .zlink{display:inline;font-weight:600;color:var(--gold);text-decoration:underline;text-underline-offset:2px}
+.lvl-n .zpill{display:inline-block;font-size:11.5px;padding:1px 8px;vertical-align:1px}
+.lvl-n .zline{margin-top:4px}
+.rating-big .of{font-family:var(--font-ui);font-size:.42em;font-weight:600;letter-spacing:0;color:var(--ink-2)}
 .lessons{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .lesson{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border-radius:10px;text-decoration:none;border:1px solid var(--rule);background:var(--surface)}
 .lesson:hover{border-color:var(--rule-2)}
@@ -401,7 +405,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
   // ---------- storage ----------
   var storageOK = true;
   function fresh() {
-    return { v: 1, rating: null, peak: null, n: 0, hist: [], att: {}, rev: {}, time: {}, days: {}, daily: {}, weekly: {}, diag: null, diagRun: null, teacher: {}, drafts: {}, read: {}, goals: { from: {}, done: {} }, flash: null, notice: null, lastTopic: null, lastExport: null, weekGoal: 10 };
+    return { v: 1, rating: null, peak: null, n: 0, hist: [], att: {}, rev: {}, time: {}, days: {}, daily: {}, weekly: {}, diag: null, diagRun: null, teacher: {}, drafts: {}, read: {}, goals: { from: {}, done: {} }, flash: null, notice: null, lastTopic: null, lastExport: null, weekGoal: 10, credit: {}, zrun: null, zres: null };
   }
   function load() {
     try {
@@ -480,15 +484,18 @@ window.MM = { topics: [], diag: null, roadmap: [],
     return v / ps.length;
   }
   function solvedIn(ps) { return ps.filter(function (p) { var s = status(p.id); return s === 'clean' || s === 'ok'; }).length; }
+  // уровень засчитан зачётом (F1): его задачи больше не предлагаются как следующий шаг
+  function credited(tid, L) { return !!(S.credit[tid] && S.credit[tid][L]); }
   function recommend(t) {
     for (var L = 1; L <= 5; L++) {
+      if (credited(t.id, L)) continue;
       var ps = t.problems.filter(function (p) { return p.lvl === L; });
       if (mastery(ps) < 0.7) {
         var c = ps.filter(function (p) { return status(p.id) === 'new'; })[0] || ps.filter(function (p) { return status(p.id) === 'bad' && !S.rev[p.id]; })[0];
         if (c) return c;
       }
     }
-    return t.problems.filter(function (p) { return status(p.id) === 'new'; })[0] || null;
+    return t.problems.filter(function (p) { return status(p.id) === 'new' && !credited(t.id, p.lvl); })[0] || null;
   }
   function nextStep(t) {
     var base = t.lessons.filter(function (l) { return !l.deep; });
@@ -496,6 +503,9 @@ window.MM = { topics: [], diag: null, roadmap: [],
     var read = base.length - unread.length;
     var unreadDeep = t.lessons.filter(function (l) { return l.deep && !S.read[l.id]; });
     var p = recommend(t);
+    // все уровни засчитаны или освоены — уроки не навязываем
+    var allDone = [1, 2, 3, 4, 5].every(function (L) { var ps = t.problems.filter(function (q) { return q.lvl === L; }); return !ps.length || credited(t.id, L) || mastery(ps) >= 0.7; });
+    if (!p && allDone) return { href: '#t-' + t.id, label: 'Тема пройдена — повтори трудные задачи', kind: 'done' };
     if (unread.length && (read < 2 || !p || (p.lvl >= 3 && read < base.length))) {
       return { href: '#l-' + unread[0].id, label: 'Читать: ' + unread[0].title, kind: 'lesson', lesson: unread[0] };
     }
@@ -548,6 +558,48 @@ window.MM = { topics: [], diag: null, roadmap: [],
     var dk = today(), wk = weekKey();
     if (good && S.daily[dk] && S.daily[dk].id === id) S.daily[dk].done = true;
     if (good && S.weekly[wk] && S.weekly[wk].id === id) S.weekly[wk].done = true;
+  }
+
+  // ---------- зачёт по уровню (F1) ----------
+  // 5 тестовых задач уровня 1–3 без подсказок; верно хотя бы 4 — уровень засчитан.
+  // Каждый ответ — обычная попытка: идёт в рейтинг, ошибка попадает на повторение.
+  var Z_N = 5;
+  function zTests(t, L) { return t.problems.filter(function (p) { return p.lvl === L && p.type !== 'proof'; }); }
+  function zAvailable(t, L) { return L >= 1 && L <= 3 && zTests(t, L).length >= 4; }
+  function zPass(n) { return n - 1; }
+  // сначала нерешавшиеся задачи, потом нерешённые, потом остальные; внутри — случайно, затем по рейтингу
+  function zPick(t, L) {
+    var seed = String(Date.now()), rank = function (p) { var s = status(p.id); return s === 'new' ? 0 : s === 'bad' ? 1 : 2; };
+    var ps = zTests(t, L).slice().sort(function (a, b) { return rank(a) - rank(b) || hash32(a.id + seed) - hash32(b.id + seed); });
+    return ps.slice(0, Math.min(Z_N, ps.length)).sort(function (a, b) { return a.r - b.r; }).map(function (p) { return p.id; });
+  }
+  function zStart(tid, L) {
+    S.zrun = { t: tid, L: L, ids: zPick(T[tid], L), i: 0, ans: {}, ok: {}, qt: Date.now() };
+    S.zres = null; save();
+  }
+  function zAnswer(v, ok) {
+    var run = S.zrun, id = run.ids[run.i], p = P[id];
+    run.ans[id] = v; run.ok[id] = ok;
+    var sec = Math.round((Date.now() - run.qt) / 1000); run.qt = Date.now();
+    var a = S.att[id];
+    if (!a) {
+      var d = applyRating(p, ok ? 1 : 0, 1);
+      S.att[id] = { st: ok ? 'clean' : 'bad', s: ok ? 1 : 0, d: d, h: 0, at: Date.now(), tries: 1, sec: sec, z: true };
+      if (!ok) S.rev[id] = { due: addDays(today(), 1), step: 0 };
+    } else {
+      if (isDue(id)) reviewStep(id, ok);
+      a.tries++; if (ok && a.st === 'bad') a.st = 'ok';
+    }
+    markDay(); noteSolved(id, ok);
+    run.i++;
+    if (run.i >= run.ids.length) {
+      var k = run.ids.filter(function (x) { return run.ok[x]; }).length, n = run.ids.length, pass = k >= zPass(n);
+      if (pass) { S.credit[run.t] = S.credit[run.t] || {}; S.credit[run.t][run.L] = { ts: Date.now(), k: k, n: n }; }
+      S.zres = { t: run.t, L: run.L, ids: run.ids, ans: run.ans, ok: run.ok, k: k, n: n, pass: pass, ts: Date.now() };
+      S.zrun = null;
+    }
+    save(); render();
+    var inp = document.getElementById('zans'); if (inp) inp.focus();
   }
 
   // ---------- answering ----------
@@ -657,6 +709,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     if (h.indexOf('p-') === 0) return { view: 'problem', id: h.slice(2) };
     if (h.indexOf('t-') === 0) return { view: 'topic', id: h.slice(2) };
     if (h.indexOf('l-') === 0) return { view: 'lesson', id: h.slice(2) };
+    if (/^z-.+-\d$/.test(h)) return { view: 'zachet', id: h.slice(2, -2), lvl: Number(h.slice(-1)) };
     if (h === 'map' || h === 'me' || h === 'diag') return { view: h };
     return { view: 'today' };
   }
@@ -667,7 +720,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     function nl(h, name, views) { return '<a href="#' + h + '"' + (views.indexOf(v) >= 0 ? ' aria-current="page"' : '') + '>' + name + '</a>'; }
     return '<header class="top"><div class="top-in">' +
       '<a class="brand" href="#today"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">MIT mission</span><span class="brand-sub">математика</span></a>' +
-      '<nav class="nav" aria-label="Разделы">' + nl('today', 'Сегодня', ['today']) + nl('map', 'Темы', ['map', 'topic', 'lesson', 'problem']) + nl('me', 'Профиль', ['me']) + '</nav>' +
+      '<nav class="nav" aria-label="Разделы">' + nl('today', 'Сегодня', ['today']) + nl('map', 'Темы', ['map', 'topic', 'lesson', 'problem', 'zachet']) + nl('me', 'Профиль', ['me']) + '</nav>' +
       '<a class="rchip" href="#me" title="Твой рейтинг">' + (r == null ? '—' : r) + '</a>' +
       '</div></header>';
   }
@@ -772,7 +825,8 @@ window.MM = { topics: [], diag: null, roadmap: [],
   function gradePill(it) { return it && it.grades ? '<span class="pill">' + (/^\d/.test(it.grades) ? it.grades + ' класс' : it.grades) + '</span>' : ''; }
   function topicRow(t, it) {
     var solved = solvedIn(t.problems);
-    return '<li><a class="mitem" href="#t-' + t.id + '"><span class="mt">' + t.title + '</span>' + gradePill(it) + '<span class="mprog"><span class="bar"><i style="width:' + (solved / t.problems.length * 100) + '%"></i></span>' + solved + '/' + t.problems.length + '</span></a></li>';
+    var cl = [1, 2, 3].filter(function (L) { return credited(t.id, L); });
+    return '<li><a class="mitem" href="#t-' + t.id + '"><span class="mt">' + t.title + '</span>' + gradePill(it) + (cl.length ? '<span class="pill good">зачёт: ' + (cl.length > 1 ? 'уровни ' : 'уровень ') + cl.join(', ') + '</span>' : '') + '<span class="mprog"><span class="bar"><i style="width:' + (solved / t.problems.length * 100) + '%"></i></span>' + solved + '/' + t.problems.length + '</span></a></li>';
   }
   function vMap() {
     var all = 0, ready = 0;
@@ -788,11 +842,16 @@ window.MM = { topics: [], diag: null, roadmap: [],
   function vTopic(id) {
     var t = T[id]; if (!t) return notFound();
     var ns = nextStep(t), rec = recommend(t);
+    var zOffer = false;
     var levels = [1, 2, 3, 4, 5].map(function (L) {
       var ps = t.problems.filter(function (p) { return p.lvl === L; });
-      var m = mastery(ps);
-      return '<div class="lvl"><div class="lvl-n">' + L + ' · ' + LV[L][0] + '<span>' + LV[L][1] + '</span></div><div class="bar' + (m >= 0.7 ? ' goldbar' : '') + '"><i style="width:' + Math.round(m * 100) + '%"></i></div><div class="lvl-c">' + solvedIn(ps) + '/' + ps.length + '</div></div>';
+      if (!ps.length) return '';
+      var m = mastery(ps), cr = credited(t.id, L), done = cr || m >= 0.7;
+      var z = cr ? '<span class="pill good zpill">зачёт ✓</span>' : !done && zAvailable(t, L) ? '<a class="zlink" href="#z-' + t.id + '-' + L + '">сдать зачёт</a>' : '';
+      if (!done && zAvailable(t, L)) zOffer = true;
+      return '<div class="lvl"><div class="lvl-n">' + L + ' · ' + LV[L][0] + '<span>' + LV[L][1] + '</span>' + (z ? '<span class="zline">' + z + '</span>' : '') + '</div><div class="bar' + (done ? ' goldbar' : '') + '"><i style="width:' + (cr ? 100 : Math.round(m * 100)) + '%"></i></div><div class="lvl-c">' + solvedIn(ps) + '/' + ps.length + '</div></div>';
     }).join('');
+    if (zOffer) levels += '<p class="small" style="margin:6px 0 0">Материал уровня уже знаком? Сдай зачёт: ' + Z_N + ' задач без подсказок, ' + zPass(Z_N) + ' верных — уровень засчитан, и можно идти дальше.</p>';
     var lessonItem = function (l, i) {
       var rd = S.read[l.id];
       return '<li><a class="lesson' + (rd ? ' read' : '') + '" href="#l-' + l.id + '"><span class="ln">' + (rd ? '✓' : i + 1) + '</span><span class="lt">' + l.title + '</span><span class="lm">' + (rd ? 'прочитано' : l.mins + ' мин') + '</span></a></li>';
@@ -837,6 +896,49 @@ window.MM = { topics: [], diag: null, roadmap: [],
       '<article class="lessonbody">' + body + '</article>' +
       '<div class="pnav">' + (prv ? '<a class="btn ghost" href="#l-' + prv.id + '">← ' + prv.title + '</a>' : '<span></span>') +
       '<button class="btn" type="button" data-act="read" data-id="' + l.id + '">' + (nxt ? 'Понятно, дальше →' : 'Понятно, к задачам →') + '</button></div>';
+  }
+  function vZachet(tid, L) {
+    var t = T[tid]; if (!t || !zAvailable(t, L)) return notFound();
+    var head = '<div><nav class="crumbs"><a href="#map">Темы</a> / <a href="#t-' + t.id + '">' + t.title + '</a> / Зачёт</nav>' +
+      '<h1 class="pg" style="margin-top:6px">Зачёт · уровень ' + L + '</h1><p class="pg-sub">' + LV[L][0] + ' · ' + t.title + '</p></div>';
+    var run = S.zrun && S.zrun.t === tid && S.zrun.L === L ? S.zrun : null;
+    if (run) {
+      var p = P[run.ids[run.i]], n = run.ids.length;
+      var h = head + '<div class="dprog"><span class="lab">Задача ' + (run.i + 1) + ' из ' + n + '</span><div class="bar"><i style="width:' + (run.i / n * 100) + '%"></i></div><span class="pill num">' + p.r + '</span></div>' +
+        '<section class="stmt">' + p.q + '</section>';
+      if (p.type === 'choice') {
+        h += '<div class="opts" role="group" aria-label="Варианты ответа">' + p.opts.map(function (o, i) {
+          return '<button type="button" class="opt" data-act="zopt" data-i="' + i + '"><span class="ol">' + 'АБВГ'.charAt(i) + '</span><span>' + o + '</span></button>';
+        }).join('') + '</div>';
+      } else {
+        h += '<form class="ansform" data-form="zans"><label class="lab" for="zans" style="flex-basis:100%">Ответ</label><input id="zans" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"><button class="btn" type="submit">Ответить</button></form>';
+      }
+      return h + '<div class="actions"><button class="btn ghost small" type="button" data-act="zskip">Не знаю — дальше</button></div>';
+    }
+    var res = S.zres && S.zres.t === tid && S.zres.L === L ? S.zres : null;
+    var start = '<button class="btn" type="button" data-act="zstart" data-t="' + t.id + '" data-l="' + L + '">';
+    var back = '<a class="btn ghost" href="#t-' + t.id + '">К теме</a>';
+    if (res) {
+      var list = res.ids.map(function (id) {
+        var q = P[id], ok = res.ok[id], ans = res.ans[id];
+        var given = ans == null ? 'не знаю' : q.type === 'choice' ? q.opts[ans] : esc(ans);
+        var right = q.type === 'choice' ? q.opts[q.a] : q.a[0];
+        return '<li><details><summary><span class="rs ' + (ok ? 'y' : 'n') + '">' + (ok ? '✓' : '✗') + '</span><span class="rq">' + q.q + '</span></summary><div class="rsol"><b>Твой ответ:</b> ' + given + (ok ? '' : '<br><b>Верный ответ:</b> ' + right) + '<br>' + q.sol + '<div class="actions" style="margin-top:8px"><a class="btn ghost small" href="#p-' + id + '">Открыть задачу</a></div></div></details></li>';
+      }).join('');
+      var next = res.pass ? (L < 3 && zAvailable(t, L + 1) && !credited(t.id, L + 1) ? 'Можно сразу сдать зачёт по уровню ' + (L + 1) + '.' : 'Дальше — задачи следующего уровня.') : '';
+      return head +
+        '<section class="panel" style="max-width:720px"><div class="lab">' + (res.pass ? 'Зачёт сдан ✓' : 'Зачёт не сдан') + '</div><div class="rating-big" style="font-size:56px;margin:6px 0">' + res.k + '<span class="of"> из </span>' + res.n + '</div>' +
+        '<p style="margin:0">' + (res.pass ? 'Уровень ' + L + ' засчитан: программа больше не будет предлагать его задачи как следующий шаг. ' + next : 'Нужно ' + zPass(res.n) + ' из ' + res.n + '. Разбери ошибки ниже и попробуй ещё раз — задачи будут другими, пока они есть.') + '</p></section>' +
+        '<div class="actions">' + (res.pass ? (next.indexOf('зачёт') >= 0 ? '<a class="btn" href="#z-' + t.id + '-' + (L + 1) + '">Зачёт по уровню ' + (L + 1) + '</a>' : '<a class="btn" href="#t-' + t.id + '">К теме</a>') + (next.indexOf('зачёт') >= 0 ? back : '') : start + 'Пройти ещё раз</button>' + back) + '</div>' +
+        '<section class="msec"><h2>Задачи и решения</h2><ul class="reslist">' + list + '</ul></section>';
+    }
+    var n0 = Math.min(Z_N, zTests(t, L).length), cr = S.credit[t.id] && S.credit[t.id][L];
+    return head +
+      '<section class="panel" style="max-width:720px">' + (cr ? '<p style="margin-top:0"><span class="pill good">засчитан ' + fmtShort(cr.ts) + '</span></p>' : '') +
+      '<ul class="steps"><li>' + n0 + ' ' + plural(n0, 'задача', 'задачи', 'задач') + ' уровня «' + LV[L][0] + '» без подсказок, ответы проверяются в конце.</li>' +
+      '<li>Верно ' + zPass(n0) + ' из ' + n0 + ' — уровень засчитан: программа перестанет предлагать его задачи и поведёт дальше.</li>' +
+      '<li>Каждый ответ идёт в рейтинг как обычная попытка, а ошибки вернутся на повторение.</li></ul>' +
+      '<div class="actions" style="margin-top:16px">' + start + 'Начать зачёт</button>' + back + '</div></section>';
   }
   function hintsBlock(p, ratedPending) {
     var hs = p.hints || [];
@@ -1144,10 +1246,10 @@ window.MM = { topics: [], diag: null, roadmap: [],
 
   function render() {
     route = parseRoute();
-    var lt = route.view === 'topic' ? route.id : route.view === 'problem' && P[route.id] ? P[route.id].topic : route.view === 'lesson' && findLesson(route.id) ? findLesson(route.id).t.id : null;
+    var lt = route.view === 'topic' || route.view === 'zachet' ? route.id : route.view === 'problem' && P[route.id] ? P[route.id].topic : route.view === 'lesson' && findLesson(route.id) ? findLesson(route.id).t.id : null;
     if (lt && T[lt] && S.lastTopic !== lt) { S.lastTopic = lt; save(); }
-    // уроку и задаче нужен файл темы; странице темы хватает оглавления, но файл заранее подгружаем
-    var need = lt && T[lt] && T[lt].loaded === false && (route.view === 'problem' || route.view === 'lesson') ? lt : null;
+    // уроку, задаче и зачёту (там разбор с решениями) нужен файл темы; странице темы хватает оглавления, но файл заранее подгружаем
+    var need = lt && T[lt] && T[lt].loaded === false && (route.view === 'problem' || route.view === 'lesson' || route.view === 'zachet') ? lt : null;
     if (lt && T[lt] && T[lt].loaded === false && route.view === 'topic' && !failed[lt]) ensureTopic(lt, function () {});
     if (need && !failed[need]) {
       var h0 = location.hash;
@@ -1158,6 +1260,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     else if (route.view === 'problem') body = vProblem(route.id);
     else if (route.view === 'topic') body = vTopic(route.id);
     else if (route.view === 'lesson') body = vLesson(route.id);
+    else if (route.view === 'zachet') body = vZachet(route.id, route.lvl);
     else if (route.view === 'map') body = vMap();
     else if (route.view === 'me') body = vMe();
     else if (route.view === 'diag') body = vDiag();
@@ -1191,7 +1294,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
   setInterval(function () {
     // до 10 минут без касаний: он может думать над задачей на бумаге
     if (document.visibilityState !== 'visible' || Date.now() - lastAct > 600000) return;
-    if (['problem', 'lesson', 'diag'].indexOf(route.view) < 0) return;
+    if (['problem', 'lesson', 'diag', 'zachet'].indexOf(route.view) < 0) return;
     var k = today(); S.time[k] = (S.time[k] || 0) + 15; ticks++;
     if (ticks % 4 === 0) save();
   }, 15000);
@@ -1230,6 +1333,10 @@ window.MM = { topics: [], diag: null, roadmap: [],
       var p = P[cur.id], v = document.getElementById('ans').value, ok = checkNum(p, v);
       if (ok === null) { document.getElementById('ans').focus(); return; }
       answerTest(cur.id, ok, null);
+    } else if (f.getAttribute('data-form') === 'zans') {
+      var zp = P[S.zrun.ids[S.zrun.i]], zv = document.getElementById('zans').value, zok = checkNum(zp, zv);
+      if (zok === null) { document.getElementById('zans').focus(); return; }
+      zAnswer(zv.trim(), zok);
     } else if (f.getAttribute('data-form') === 'dans') {
       var dv = document.getElementById('dans').value.trim();
       if (!dv) { document.getElementById('dans').focus(); return; }
@@ -1251,6 +1358,9 @@ window.MM = { topics: [], diag: null, roadmap: [],
     if (act === 'opt') { var i = Number(b.getAttribute('data-i')); answerTest(cur.id, i === P[cur.id].a, i); }
     else if (act === 'hint') { cur.hints++; render(); }
     else if (act === 'reload-topic') { delete failed[b.getAttribute('data-id')]; render(); }
+    else if (act === 'zstart') { zStart(b.getAttribute('data-t'), Number(b.getAttribute('data-l'))); render(); }
+    else if (act === 'zopt') { var zi = Number(b.getAttribute('data-i')); zAnswer(zi, zi === P[S.zrun.ids[S.zrun.i]].a); }
+    else if (act === 'zskip') zAnswer(null, false);
     else if (act === 'retry') { cur.phase = 'solve'; cur.result = null; cur.picked = null; render(); }
     else if (act === 'giveup') giveUp(cur.id);
     else if (act === 'teacher') { S.teacher[cur.id] = !S.teacher[cur.id]; save(); render(); }
