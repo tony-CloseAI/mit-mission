@@ -191,6 +191,23 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   submit('[data-form="ans"]', 'ans', '0,75');
   expect('quad-52 decimal-comma answer accepted', state().att['quad-52'] && state().att['quad-52'].st === 'clean');
 
+  // topic «Правила подсчёта»: stacked C indices, grid and Catalan figures, choice and number answers
+  await nav('#t-count');
+  expect('count topic 55 problem chips, 15 deep', d.querySelectorAll('.pchip').length === 55 && d.querySelectorAll('.pchip .dp').length === 15);
+  expect('count 6 base + 3 deep lessons', d.querySelectorAll('.lessons .lesson').length === 9 && d.querySelectorAll('.deephead + .lessons .lesson').length === 3);
+  await nav('#l-cnt-l4');
+  const gridFig = d.querySelector('.lessonbody svg.fig');
+  expect('grid figure: dashed grid and gold path', gridFig && gridFig.querySelectorAll('line.d').length === 8 && gridFig.querySelectorAll('line.g').length === 5);
+  expect('stacked C indices rendered', d.querySelectorAll('.lessonbody .ix').length > 5 && d.querySelector('.lessonbody .ix').children.length === 2);
+  await nav('#l-cnt-l9');
+  expect('Catalan figure with reflected path and label', [...d.querySelectorAll('.lessonbody svg.fig text')].some(t => t.textContent === 'y = −1') && d.querySelectorAll('.lessonbody svg.fig polyline').length === 2);
+  await nav('#p-cnt-08');
+  click(d.querySelectorAll('[data-act="opt"]')[2]);
+  expect('cnt-08 choice answer accepted', state().att['cnt-08'] && state().att['cnt-08'].st === 'clean');
+  await nav('#p-cnt-53');
+  submit('[data-form="ans"]', 'ans', '55 252');
+  expect('cnt-53 answer with a space accepted', state().att['cnt-53'] && state().att['cnt-53'].st === 'clean');
+
   // deep problem page
   await nav('#p-div-43');
   expect('deep problem pill', [...d.querySelectorAll('.phead .pill')].some(x => x.textContent === 'глубокий уровень'));
@@ -218,7 +235,7 @@ function expect(name, cond) { checks.push([name, !!cond]); }
 
   // second topic: two-storey fractions render and answers work
   await nav('#map');
-  expect('map shows ready count', text().includes('Готово 5 из 45'));
+  expect('map shows ready count', text().includes('Готово 6 из 45'));
   expect('map shows grade pills', text().includes('7 класс'));
   await nav('#t-alg-expr');
   expect('alg-expr 55 problem chips, 15 deep', d.querySelectorAll('.pchip').length === 55 && d.querySelectorAll('.pchip .dp').length === 15);
