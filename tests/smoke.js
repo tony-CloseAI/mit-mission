@@ -70,6 +70,7 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   await nav('#today');
   expect('today shows rating', $('.rating-big') && $('.rating-big').textContent.trim() === String(r0));
   expect('today has 4 cards', d.querySelectorAll('.grid4 .card').length === 4);
+  expect('mixed training locked before two topics are started', !!d.querySelector('section.mixp') && !d.querySelector('section.mixp a') && d.querySelector('section.mixp').textContent.includes('Откроется'));
   expect('chart area present', !!$('[data-chart]'));
 
   await nav('#map');
@@ -265,6 +266,38 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   expect('topic shows credited level; next step is not a level-1 problem', !!d.querySelector('.zpill') && (!nsP || nsP.lvl !== 1));
   await nav('#map');
   expect('map shows credit pill', [...d.querySelectorAll('.mitem .pill.good')].some(x => x.textContent === 'зачёт: уровень 1'));
+
+  // F6: mixed training — untried test problems from several topics, feedback with topic and solution
+  await nav('#today');
+  expect('today offers mixed training', !!d.querySelector('section.mixp a[href="#mix"]'));
+  await nav('#mix');
+  const attBefore = Object.keys(state().att);
+  click('[data-act="mstart"]');
+  const mIds = state().mrun.ids;
+  const findP = id => w.MM.topics.flatMap(t => t.problems).find(p => p.id === id);
+  expect('mixed: 6 untried test problems from several topics', mIds.length === 6 && new Set(mIds.map(id => findP(id).topic)).size >= 2 && mIds.every(id => findP(id).type !== 'proof' && !attBefore.includes(id)));
+  expect('mixed: topic is hidden while solving', !text().includes('Тема:'));
+  const solLoading = () => /загружается/.test((d.querySelector('.sol-t') || {}).textContent || '');
+  async function mAns(id, mode) {
+    const p = findP(id);
+    if (mode === 'skip') click('[data-act="mskip"]');
+    else if (p.type === 'choice') click(d.querySelectorAll('[data-act="mopt"]')[mode === 'right' ? p.a : (p.a + 1) % p.opts.length]);
+    else submit('[data-form="mans"]', 'mans', mode === 'right' ? p.a[0] : '-99999');
+    for (let i = 0; i < 300 && solLoading(); i++) await sleep(10);
+  }
+  await mAns(mIds[0], 'right');
+  expect('mixed: right answer reveals topic and loaded solution', !!d.querySelector('.fb.ok') && d.querySelector('.fb-sub').textContent.includes('Тема:') && d.querySelector('.sol-t').textContent.length > 20 && !solLoading());
+  click('[data-act="mnext"]');
+  await mAns(mIds[1], 'wrong');
+  expect('mixed: wrong answer shows the right one', !!d.querySelector('.fb.no') && text().includes('Верный ответ'));
+  click('[data-act="mnext"]');
+  await mAns(mIds[2], 'skip');
+  expect('mixed: skip opens the solution', text().includes('Решение открыто'));
+  click('[data-act="mnext"]');
+  for (let i = 3; i < 6; i++) { await mAns(mIds[i], 'right'); click('[data-act="mnext"]'); }
+  for (let i = 0; i < 300 && /загружается/.test(text()); i++) await sleep(10);
+  s = state();
+  expect('mixed result: 4 of 6, attempts in rating, mistakes to review', !s.mrun && s.mres && s.mres.k === 4 && mIds.every(id => s.att[id] && s.att[id].m) && !!s.rev[mIds[1]] && !!s.rev[mIds[2]] && text().includes('Итог') && d.querySelectorAll('.reslist li').length === 6);
 
   // deep problem page
   await nav('#p-div-43');
