@@ -175,6 +175,22 @@ function expect(name, cond) { checks.push([name, !!cond]); }
   submit('[data-form="ans"]', 'ans', '20');
   expect('tri-24 answer accepted', state().att['tri-24'] && state().att['tri-24'].st === 'clean');
 
+  // topic «Квадратные уравнения»: graphs with axes (curve, axes, text), fraction and decimal-comma answers
+  await nav('#t-alg-quad');
+  expect('quad topic 55 problem chips, 15 deep', d.querySelectorAll('.pchip').length === 55 && d.querySelectorAll('.pchip .dp').length === 15);
+  expect('quad 6 base + 3 deep lessons', d.querySelectorAll('.lessons .lesson').length === 9 && d.querySelectorAll('.deephead + .lessons .lesson').length === 3);
+  await nav('#l-quad-l5');
+  const parFig = d.querySelector('.lessonbody svg.fig');
+  expect('parabola figure: curve, two axes with arrows, subscript labels', parFig && parFig.querySelectorAll('polyline.s').length === 1 && parFig.querySelectorAll('.ax').length === 4 && !!parFig.querySelector('text tspan.fs'));
+  await nav('#l-quad-l9');
+  expect('W-graph figure with free text label', [...d.querySelectorAll('.lessonbody svg.fig text')].some(t => t.textContent === 'y = a'));
+  await nav('#p-quad-11');
+  submit('[data-form="ans"]', 'ans', '−5/3');
+  expect('quad-11 fraction answer with unicode minus accepted', state().att['quad-11'] && state().att['quad-11'].st === 'clean');
+  await nav('#p-quad-52');
+  submit('[data-form="ans"]', 'ans', '0,75');
+  expect('quad-52 decimal-comma answer accepted', state().att['quad-52'] && state().att['quad-52'].st === 'clean');
+
   // deep problem page
   await nav('#p-div-43');
   expect('deep problem pill', [...d.querySelectorAll('.phead .pill')].some(x => x.textContent === 'глубокий уровень'));
@@ -202,7 +218,7 @@ function expect(name, cond) { checks.push([name, !!cond]); }
 
   // second topic: two-storey fractions render and answers work
   await nav('#map');
-  expect('map shows ready count', text().includes('Готово 4 из 45'));
+  expect('map shows ready count', text().includes('Готово 5 из 45'));
   expect('map shows grade pills', text().includes('7 класс'));
   await nav('#t-alg-expr');
   expect('alg-expr 55 problem chips, 15 deep', d.querySelectorAll('.pchip').length === 55 && d.querySelectorAll('.pchip .dp').length === 15);

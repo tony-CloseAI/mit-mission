@@ -16,6 +16,9 @@
 //   hide:   ['X']                    точки без подписи и без точки на чертеже
 //   nolab:  ['X']                    точка рисуется, но без подписи
 //   имя вида 'I_a' подписывается с нижним индексом: Iₐ
+//   curve:  [[[x, y], …], { p: [[x, y], …], gold: true, dash: true }]  ломаные (графики функций)
+//   axes:   { x: [x1, x2], y: [y1, y2] }  оси координат со стрелками и подписями x, y
+//   text:   [[x, y, 'y = a'], …]  подпись в точке без самой точки
 //   w:      ширина в пикселях (по умолчанию 300), alt: описание для экранного диктора
 (function () {
   var DIRS = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0], ne: [0.75, -0.75], nw: [-0.75, -0.75], se: [0.75, 0.75], sw: [-0.75, 0.75] };
@@ -34,6 +37,10 @@
     var xs = [], ys = [];
     keys.forEach(function (k) { xs.push(P[k][0]); ys.push(P[k][1]); });
     (o.circ || []).forEach(function (c) { var C = typeof c.c === 'string' ? P[c.c] : c.c; xs.push(C[0] - c.r, C[0] + c.r); ys.push(C[1] - c.r, C[1] + c.r); });
+    var curves = (o.curve || []).map(function (c) { return Array.isArray(c) ? { p: c } : c; });
+    curves.forEach(function (c) { c.p.forEach(function (q) { xs.push(q[0]); ys.push(q[1]); }); });
+    if (o.axes) { xs.push(o.axes.x[0], o.axes.x[1], 0); ys.push(o.axes.y[0], o.axes.y[1], 0); }
+    (o.text || []).forEach(function (q) { xs.push(q[0]); ys.push(q[1]); });
     var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs), minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
     var W = o.w || 300, pad = 28;
     var sc = (W - 2 * pad) / Math.max(maxX - minX, 1e-9);
@@ -45,6 +52,16 @@
     function pt(n) { return typeof n === 'string' ? P[n] : n; }
     function line(a, b, cls) { a = pt(a); b = pt(b); return '<line class="' + cls + '" x1="' + f(X(a)) + '" y1="' + f(Y(a)) + '" x2="' + f(X(b)) + '" y2="' + f(Y(b)) + '"/>'; }
     var out = [];
+    // оси координат — под всем остальным
+    if (o.axes) {
+      var ax0 = [o.axes.x[0], 0], ax1 = [o.axes.x[1], 0], ay0 = [0, o.axes.y[0]], ay1 = [0, o.axes.y[1]];
+      out.push(line(ax0, ax1, 'ax'), line(ay0, ay1, 'ax'));
+      var ex = X(ax1), ey = Y(ax1), qx = X(ay1), qy = Y(ay1);
+      out.push('<path class="ax" d="M' + f(ex - 7) + ' ' + f(ey - 3.5) + ' L' + f(ex) + ' ' + f(ey) + ' L' + f(ex - 7) + ' ' + f(ey + 3.5) + '"/>');
+      out.push('<path class="ax" d="M' + f(qx - 3.5) + ' ' + f(qy + 7) + ' L' + f(qx) + ' ' + f(qy) + ' L' + f(qx + 3.5) + ' ' + f(qy + 7) + '"/>');
+      out.push('<text class="t" x="' + f(ex - 4) + '" y="' + f(ey + 15) + '" text-anchor="middle" dominant-baseline="central">x</text>');
+      out.push('<text class="t" x="' + f(qx + 12) + '" y="' + f(qy + 4) + '" text-anchor="middle" dominant-baseline="central">y</text>');
+    }
     // центр масс видимых точек — от него отводим подписи
     var vis = keys.filter(function (k) { return hide.indexOf(k) < 0; });
     var cx = 0, cy = 0; vis.forEach(function (k) { cx += X(P[k]); cy += Y(P[k]); }); cx /= vis.length || 1; cy /= vis.length || 1;
@@ -57,6 +74,9 @@
     (o.seg || []).forEach(function (s) { var ns = names(s); out.push(line(ns[0], ns[1], 's')); });
     (o.dash || []).forEach(function (s) { var ns = names(s); out.push(line(ns[0], ns[1], 's d')); });
     (o.gold || []).forEach(function (s) { var ns = names(s); out.push(line(ns[0], ns[1], 's g')); });
+    curves.forEach(function (c) {
+      out.push('<polyline class="s' + (c.gold ? ' g' : '') + (c.dash ? ' d' : '') + '" points="' + c.p.map(function (q) { return f(X(q)) + ',' + f(Y(q)); }).join(' ') + '"/>');
+    });
 
     // дуги углов
     (o.ang || []).forEach(function (a) {
@@ -91,6 +111,9 @@
       out.push('<circle class="p" cx="' + f(x) + '" cy="' + f(y) + '" r="2.6"/>');
       if (nolab.indexOf(k) >= 0) return;
       out.push('<text class="t" x="' + f(x + dir[0] * 13) + '" y="' + f(y + dir[1] * 13) + '" text-anchor="middle" dominant-baseline="central">' + labelText(k) + '</text>');
+    });
+    (o.text || []).forEach(function (q) {
+      out.push('<text class="t" x="' + f(X(q)) + '" y="' + f(Y(q)) + '" text-anchor="middle" dominant-baseline="central">' + q[2] + '</text>');
     });
     Object.keys(o.len || {}).forEach(function (s) {
       var ns = s.length === 2 ? s.split('') : s.split('-'), A = P[ns[0]], B = P[ns[1]];
