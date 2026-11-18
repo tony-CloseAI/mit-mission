@@ -69,8 +69,11 @@ function expect(name, cond) { checks.push([name, !!cond]); }
 
   await nav('#today');
   expect('today shows rating', $('.rating-big') && $('.rating-big').textContent.trim() === String(r0));
-  expect('today has 4 cards', d.querySelectorAll('.grid4 .card').length === 4);
-  expect('mixed training locked before two topics are started', !!d.querySelector('section.mixp') && !d.querySelector('section.mixp a') && d.querySelector('section.mixp').textContent.includes('Откроется'));
+  expect('today opens with the daily plan', !!d.querySelector('[data-plan="day"]') && d.querySelectorAll('.plan .pi').length >= 2);
+  expect('route panel present', d.querySelectorAll('.route .ri').length === w.MM.topics.length);
+  await nav('#mix');
+  expect('mixed training locked before two topics are started', !d.querySelector('[data-act="mstart"]') && text().includes('Откроется'));
+  await nav('#today');
   expect('chart area present', !!$('[data-chart]'));
 
   await nav('#map');
@@ -269,7 +272,7 @@ function expect(name, cond) { checks.push([name, !!cond]); }
 
   // F6: mixed training — untried test problems from several topics, feedback with topic and solution
   await nav('#today');
-  expect('today offers mixed training', !!d.querySelector('section.mixp a[href="#mix"]'));
+  expect('today links to mixed training', !!d.querySelector('.route + .actions a[href="#mix"], .panel a[href="#mix"]'));
   await nav('#mix');
   const attBefore = Object.keys(state().att);
   click('[data-act="mstart"]');
@@ -347,11 +350,11 @@ function expect(name, cond) { checks.push([name, !!cond]); }
 
   // today after work
   await nav('#today');
-  expect('continue card follows last topic', [...d.querySelectorAll('.grid4 .card')].some(c => c.textContent.includes('Продолжить') && c.textContent.includes('Выражения и тождества')));
+  expect('plan has a next step', !!d.querySelector('[data-plan="day"] .actions .btn'));
   expect('backup reminder after 10 rated problems', text().includes('Резервная копия'));
   expect('today streak/day count', text().includes('Решено сегодня'));
   expect('weekly goal 10 h by default', text().includes('Цель — 10 ч за 7 дней'));
-  expect('review card shows due 0 today (due tomorrow)', text().includes('На сегодня всё повторено'));
+  expect('no review item today (mistakes are due tomorrow)', !text().includes('Повтори задачи с ошибками'));
   expect('chart svg drawn', !!$('[data-chart] svg'));
 
   // every topic: first lesson and last problem render with full content (on the site — after loading)

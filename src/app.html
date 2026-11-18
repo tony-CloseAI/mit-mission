@@ -200,6 +200,29 @@ a.mitem:hover{border-color:var(--rule-2)}
 .lvl-n .zpill{display:inline-block;font-size:11.5px;padding:1px 8px;vertical-align:1px}
 .lvl-n .zline{margin-top:4px}
 section.mixp{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between}
+.planp{border-color:var(--gold-fill)}
+.planp .actions{margin-top:14px}
+.howto .actions{margin-top:12px}
+.plan-top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px;margin:4px 0 10px}
+.plan-h{font-size:22px;line-height:1.25;margin:4px 0 0}
+.plan{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:8px}
+.plan .pi{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 14px;border:1px solid var(--rule);border-radius:10px;background:var(--surface);text-decoration:none;color:inherit}
+.plan .pi:hover{border-color:var(--rule-2)}
+.plan .pi.cur{border-color:var(--gold-fill);box-shadow:inset 0 0 0 1px var(--gold-soft)}
+.plan .pi.done{opacity:.62}
+.plan .pn{font-family:var(--font-num);font-weight:700;text-align:center;color:var(--ink-2)}
+.plan .pi.done .pn{color:var(--good)}
+.plan .pt b{display:block;font-weight:600;font-size:15px;line-height:1.35}
+.plan .pt span{display:block;font-size:13px;color:var(--ink-3);margin-top:2px}
+.pm{font-family:var(--font-num);font-size:13px;color:var(--ink-2);white-space:nowrap}
+.planbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;max-width:780px;padding:12px 16px;border:1px solid var(--gold-fill);border-radius:12px;background:var(--gold-soft)}
+.route{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px}
+.route .ri{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 12px;border-radius:9px;border:1px solid var(--rule);text-decoration:none;color:inherit;background:var(--surface)}
+.route .ri.cur{border-color:var(--gold-fill);font-weight:600}
+.route .ri.done .rn{color:var(--good)}
+.route .rn{font-family:var(--font-num);font-weight:700;text-align:center;color:var(--ink-2)}
+.route .rs{font-size:13px;color:var(--ink-3)}
+.route .ri.cur .rs{color:var(--gold)}
 .rating-big .of{font-family:var(--font-ui);font-size:.42em;font-weight:600;letter-spacing:0;color:var(--ink-2)}
 .lessons{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .lesson{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border-radius:10px;text-decoration:none;border:1px solid var(--rule);background:var(--surface)}
@@ -406,7 +429,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
   // ---------- storage ----------
   var storageOK = true;
   function fresh() {
-    return { v: 1, rating: null, peak: null, n: 0, hist: [], att: {}, rev: {}, time: {}, days: {}, daily: {}, weekly: {}, diag: null, diagRun: null, teacher: {}, drafts: {}, read: {}, goals: { from: {}, done: {} }, flash: null, notice: null, lastTopic: null, lastExport: null, weekGoal: 10, credit: {}, zrun: null, zres: null, mrun: null, mres: null };
+    return { v: 1, rating: null, peak: null, n: 0, hist: [], att: {}, rev: {}, time: {}, days: {}, daily: {}, weekly: {}, diag: null, diagRun: null, teacher: {}, drafts: {}, read: {}, goals: { from: {}, done: {} }, flash: null, notice: null, lastTopic: null, lastExport: null, weekGoal: 10, credit: {}, zrun: null, zres: null, mrun: null, mres: null, plan: null, restDay: 0, howto: false };
   }
   function load() {
     try {
@@ -532,7 +555,8 @@ window.MM = { topics: [], diag: null, roadmap: [],
     var k = today();
     if (S.daily[k] && P[S.daily[k].id]) return S.daily[k].id;
     var R = S.rating == null ? 1000 : S.rating;
-    var tests = ALL.filter(function (p) { return p.type !== 'proof'; });
+    var tests = reached().filter(function (p) { return p.type !== 'proof'; });
+    if (!tests.length) tests = ALL.filter(function (p) { return p.type !== 'proof'; });
     var pool = tests.filter(function (p) { return !S.att[p.id]; });
     if (!pool.length) pool = tests.filter(function (p) { return status(p.id) !== 'clean'; });
     if (!pool.length) pool = tests;
@@ -546,7 +570,8 @@ window.MM = { topics: [], diag: null, roadmap: [],
     var k = weekKey();
     if (S.weekly[k] && P[S.weekly[k].id]) return S.weekly[k].id;
     var R = S.rating == null ? 1000 : S.rating;
-    var proofs = ALL.filter(function (p) { return p.type === 'proof'; });
+    var proofs = reached().filter(function (p) { return p.type === 'proof'; });
+    if (!proofs.length) proofs = ALL.filter(function (p) { return p.type === 'proof'; });
     var pool = proofs.filter(function (p) { return status(p.id) !== 'clean'; });
     if (!pool.length) pool = proofs;
     pool = pool.slice().sort(function (a, b) { return Math.abs(a.r - R - 250) - Math.abs(b.r - R - 250); });
@@ -657,6 +682,206 @@ window.MM = { topics: [], diag: null, roadmap: [],
     save(); render();
     var inp = document.getElementById('mans'); if (inp) inp.focus();
   }
+
+  // ---------- маршрут и план на день ----------
+  // Ученик не выбирает сам: темы идут в порядке программы олимпиады, задачи — по рейтингу.
+  // Тема «пройдена на твоём уровне», когда в ней не осталось нерешавшихся задач не сложнее рейтинга + 250,
+  // прочитаны нужные уроки и нечего сдавать зачётом. Вырос рейтинг — тема снова открывается.
+  var ROUTE_CORE = ['div', 'alg-expr', 'proof', 'tri', 'alg-quad', 'count', 'cong', 'circ', 'pigeon', 'poly', 'ineq', 'area', 'seq', 'dioph'];
+  var WIN = 250;
+  function routeList() {
+    var r = ROUTE_CORE.filter(function (id) { return T[id]; });
+    MM.roadmap.forEach(function (sec) { sec.items.forEach(function (it) { if (it.id && T[it.id] && r.indexOf(it.id) < 0) r.push(it.id); }); });
+    MM.topics.forEach(function (t) { if (r.indexOf(t.id) < 0) r.push(t.id); });
+    return r;
+  }
+  function rNow() { return S.rating == null ? 1000 : S.rating; }
+  // нерешавшиеся задачи темы в окне рейтинга, кроме засчитанных уровней, от лёгких к трудным
+  function topicPicks(t, skip) {
+    var R = rNow();
+    return t.problems.filter(function (p) { return !S.att[p.id] && !credited(t.id, p.lvl) && p.r <= R + WIN && (!skip || skip.indexOf(p.id) < 0); })
+      .sort(function (a, b) { return a.r - b.r; });
+  }
+  // уровень, который разумнее сдать зачётом: все его задачи заметно легче рейтинга, и он почти не начат
+  function zachetOffer(t) {
+    var R = rNow();
+    for (var L = 1; L <= 3; L++) {
+      var ps = t.problems.filter(function (p) { return p.lvl === L; });
+      if (!ps.length || credited(t.id, L) || mastery(ps) >= 0.7 || !zAvailable(t, L)) continue;
+      var tried = ps.filter(function (p) { return S.att[p.id]; }).length, top = Math.max.apply(null, ps.map(function (p) { return p.r; }));
+      if (top <= R - 100 && tried < 3) return L;
+    }
+    return 0;
+  }
+  // уроки, которые нужно прочитать перед задачами: два первых сразу, все основные — до полуфинала, глубокие — перед ◆
+  function lessonsNeeded(t, picks, skip) {
+    var base = t.lessons.filter(function (l) { return !l.deep; }), unread = base.filter(function (l) { return !S.read[l.id] && (!skip || skip.indexOf(l.id) < 0); });
+    var read = base.length - unread.length, p = picks[0], out = [];
+    if (unread.length && (read < 2 || !p || p.lvl >= 3)) out = unread.slice();
+    else if (p && p.deep) out = t.lessons.filter(function (l) { return l.deep && !S.read[l.id] && (!skip || skip.indexOf(l.id) < 0); });
+    return { list: out, read: read, base: base.length };
+  }
+  function topicOpen(t) { var pk = topicPicks(t); return pk.length > 0 || lessonsNeeded(t, pk).list.length > 0 || zachetOffer(t) > 0; }
+  function frontier() { var r = routeList(); for (var i = 0; i < r.length; i++) if (topicOpen(T[r[i]])) return r[i]; return null; }
+  // задачи тем, до которых он дошёл: всё до текущей темы маршрута включительно
+  function reached() {
+    var r = routeList(), fr = frontier(), upto = fr ? r.indexOf(fr) : r.length - 1, out = [];
+    r.slice(0, upto + 1).forEach(function (id) { out = out.concat(T[id].problems); });
+    return out;
+  }
+  function estMin(p) { return p.type === 'proof' ? 25 : 7; }
+  function wd(dateStr) { var q = dateStr.split('-').map(Number); return new Date(q[0], q[1] - 1, q[2]).getDay(); }
+  function dayKind(dateStr) { var w = wd(dateStr), rd = S.restDay == null ? 0 : S.restDay; return w === rd ? 'rest' : w === (rd + 6) % 7 ? 'long' : 'normal'; }
+  // 10 часов в неделю: пять обычных дней по 75 минут, длинный день 3 ч 45 мин, один день отдыха
+  function dayBudget(kind) { var h = WEEK_OPTS.indexOf(S.weekGoal) >= 0 ? S.weekGoal : 10; return Math.round(h * (kind === 'long' ? 22.5 : 7.5)); }
+  function planIds(items) { var out = []; items.forEach(function (it) { if (it.id) out.push(it.id); if (it.ids) out = out.concat(it.ids); }); return out; }
+  // пункты по одной теме: зачёт, уроки, задачи — сколько влезает в бюджет.
+  // Задачи берутся, только если для них прочитаны уроки (или уроки стоят в плане раньше):
+  // первые задачи — после двух уроков, полуфинал и выше — после всех основных, глубокие — после глубоких.
+  function planTopic(tid, budget, taken, maxLessons) {
+    var t = T[tid], out = [], used = 0;
+    var zl = zachetOffer(t);
+    if (zl && taken.indexOf('z:' + tid) < 0) { out.push({ k: 'zachet', t: tid, L: zl, min: 20 }); used += 20; taken.push('z:' + tid); }
+    var picks = topicPicks(t, taken), need = lessonsNeeded(t, picks, taken), first = Math.min(2, need.base);
+    // в обычный день — до двух первых уроков, в длинный день можно прочитать больше
+    var want = need.read < first ? Math.max(first - need.read, maxLessons > 2 ? maxLessons : 0) : need.list.length;
+    need.list.slice(0, Math.min(want, maxLessons)).forEach(function (l) {
+      if (used + l.mins <= budget || !out.length) { out.push({ k: 'lesson', id: l.id, t: tid, min: l.mins }); used += l.mins; taken.push(l.id); }
+    });
+    var has = function (l) { return S.read[l.id] || taken.indexOf(l.id) >= 0; };
+    var base = t.lessons.filter(function (l) { return !l.deep; }), deep = t.lessons.filter(function (l) { return l.deep; });
+    var nBase = base.filter(has).length, allBase = nBase === base.length, allDeep = deep.every(has);
+    // задачи уровня, который сегодня сдаётся зачётом, не дублируем; не больше 8 задач темы за день
+    var allowed = picks.filter(function (q) { return nBase >= first && (q.lvl < 3 || allBase) && (!q.deep || allDeep) && q.lvl !== zl; });
+    var ids = [], m = 0;
+    allowed.forEach(function (q) { if (ids.length < 8 && used + m + estMin(q) <= budget) { ids.push(q.id); m += estMin(q); } });
+    if (ids.length) { out.push({ k: 'practice', t: tid, ids: ids, min: m }); used += m; taken.push.apply(taken, ids); }
+    return { items: out, used: used };
+  }
+  function makePlan(forced) {
+    var k = today(), kind = dayKind(k), pl = { date: k, ts: Date.now(), kind: kind, items: [] };
+    if (kind === 'rest' && !forced) { pl.rest = true; return pl; }
+    if (kind === 'rest') pl.kind = kind = 'normal';
+    var B = dayBudget(kind), used = 0, items = pl.items, taken = [];
+    var due = dueList().slice(0, 5);
+    if (due.length) { items.push({ k: 'review', ids: due, min: 6 * due.length }); used += 6 * due.length; taken = taken.concat(due); }
+    var did = dailyId(); if (!S.att[did]) { items.push({ k: 'daily', id: did, min: 10 }); used += 10; taken.push(did); }
+    var tail = [];
+    if (kind === 'long') {
+      var wid = weeklyId(); if (!S.att[wid]) { tail.push({ k: 'weekly', id: wid, min: 40 }); used += 40; taken.push(wid); }
+      if (mixState().ok) { tail.push({ k: 'mix', min: 35 }); used += 35; }
+    }
+    var r = routeList(), fr = frontier(), start = fr ? r.indexOf(fr) : -1, topics = 0;
+    for (var i = start; i >= 0 && i < r.length && topics < 2 && B - used >= 15; i++) {
+      if (!topicOpen(T[r[i]])) continue;
+      // вторая тема за день — только знакомство: не больше 45 минут
+      var res = planTopic(r[i], topics ? Math.min(B - used, 45) : B - used, taken, topics ? 2 : kind === 'long' ? 3 : 2);
+      if (res.items.length) { items.push.apply(items, res.items); used += res.used; topics++; }
+    }
+    // все готовые темы пройдены на его уровне — задачи потруднее из пройденных тем
+    if (!fr) {
+      var R = rNow(), hard = ALL.filter(function (p) { return !S.att[p.id] && taken.indexOf(p.id) < 0; }).sort(function (a, b) { return Math.abs(a.r - R - 150) - Math.abs(b.r - R - 150); });
+      var ids = [], m = 0; hard.forEach(function (p) { if (used + m + estMin(p) <= B) { ids.push(p.id); m += estMin(p); } });
+      if (ids.length) items.push({ k: 'practice', t: P[ids[0]].topic, ids: ids, min: m, hard: true });
+    }
+    items.push.apply(items, tail);
+    return pl;
+  }
+  function plan() {
+    if (S.rating == null) return null;
+    if (!S.plan || S.plan.date !== today()) { S.plan = makePlan(false); save(); }
+    return S.plan;
+  }
+  function itemDone(it) {
+    var pl = S.plan || { ts: 0 };
+    if (it.k === 'review') return it.ids.every(function (id) { return !isDue(id); });
+    if (it.k === 'daily' || it.k === 'weekly') return !!S.att[it.id];
+    if (it.k === 'lesson') return !!S.read[it.id];
+    if (it.k === 'zachet') return credited(it.t, it.L) || !!(S.zres && S.zres.t === it.t && S.zres.L === it.L && S.zres.ts >= pl.ts);
+    if (it.k === 'mix') return !!(S.mres && S.mres.ts >= pl.ts);
+    return it.ids.every(function (id) { return !!S.att[id]; });
+  }
+  function itemHref(it) {
+    if (it.k === 'review') return '#p-' + (it.ids.filter(isDue)[0] || it.ids[0]);
+    if (it.k === 'daily' || it.k === 'weekly') return '#p-' + it.id;
+    if (it.k === 'lesson') return '#l-' + it.id;
+    if (it.k === 'zachet') return '#z-' + it.t + '-' + it.L;
+    if (it.k === 'mix') return '#mix';
+    return '#p-' + (it.ids.filter(function (id) { return !S.att[id]; })[0] || it.ids[0]);
+  }
+  function itemText(it) {
+    if (it.k === 'review') return ['Повтори задачи с ошибками', it.ids.length + ' ' + plural(it.ids.length, 'задача вернулась', 'задачи вернулись', 'задач вернулись') + ' на повторение'];
+    if (it.k === 'daily') return ['Задача дня', probLabel(P[it.id])];
+    if (it.k === 'weekly') return ['Задача недели — доказательство', probLabel(P[it.id])];
+    if (it.k === 'lesson') { var f = findLesson(it.id); return ['Урок: «' + f.l.title + '»', f.t.title + (f.l.deep ? ' · глубокий уровень' : '')]; }
+    if (it.k === 'zachet') return ['Зачёт: уровень ' + it.L + ' · ' + LV[it.L][0], T[it.t].title + ' — этот уровень тебе по силам: 5 задач без подсказок'];
+    if (it.k === 'mix') return ['Смешанная тренировка', M_N + ' задач из разных тем без подписи темы'];
+    var dn = it.ids.filter(function (id) { return S.att[id]; }).length;
+    var lv = []; it.ids.forEach(function (id) { var nm = LV[P[id].lvl][0]; if (lv.indexOf(nm) < 0) lv.push(nm); });
+    return [(it.hard ? 'Задачи потруднее: ' : 'Задачи: ') + '«' + T[it.t].title + '»', 'решено ' + dn + ' из ' + it.ids.length + ' · ' + (lv.length > 1 ? 'уровни ' : 'уровень ') + lv.map(function (x) { return '«' + x + '»'; }).join(', ')];
+  }
+  function planNext() { var pl = S.plan; if (!pl || pl.date !== today() || pl.rest) return null; var nx = pl.items.filter(function (x) { return !itemDone(x); })[0]; return nx ? itemHref(nx) : null; }
+  function inPlan(id) { var pl = S.plan; return !!(pl && pl.date === today() && !pl.rest && planIds(pl.items).indexOf(id) >= 0); }
+  function planBar() {
+    var pl = S.plan; if (!pl || pl.date !== today() || pl.rest) return '';
+    var n = pl.items.length, dn = pl.items.filter(itemDone).length, nx = planNext();
+    return '<div class="planbar"><span>План на сегодня: сделано <b>' + dn + ' из ' + n + '</b></span>' + (nx ? '<a class="btn" href="' + nx + '">Дальше по плану →</a>' : '<a class="btn" href="#today">План выполнен ✓</a>') + '</div>';
+  }
+  function planMore() {
+    var pl = plan(), taken = planIds(pl.items).concat(pl.items.filter(function (x) { return x.k === 'zachet'; }).map(function (x) { return 'z:' + x.t; }));
+    var r = routeList(), fr = frontier(), added = false;
+    for (var i = fr ? r.indexOf(fr) : r.length; i < r.length && !added; i++) {
+      if (!topicOpen(T[r[i]])) continue;
+      var res = planTopic(r[i], 45, taken, 1);
+      if (res.items.length) { pl.items.push.apply(pl.items, res.items); added = true; }
+    }
+    if (!added && mixState().ok && !pl.items.some(function (x) { return x.k === 'mix' && !itemDone(x); })) { pl.items.push({ k: 'mix', min: 35 }); added = true; }
+    save();
+    return added;
+  }
+  var DOW = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
+  function vPlan() {
+    var pl = plan();
+    if (pl.rest) {
+      return '<section class="panel planp" data-plan="rest"><div class="lab">План на сегодня</div><h2 class="plan-h">Сегодня выходной</h2>' +
+        '<p style="margin:6px 0 0">Отдых — тоже часть подготовки: за день без задач всё прочитанное и решённое укладывается в голове. План на завтра появится утром.</p>' +
+        '<div class="actions"><button class="btn ghost" type="button" data-act="plan-force">Всё равно позаниматься</button></div></section>';
+    }
+    var items = pl.items, done = items.filter(itemDone), nxIt = items.filter(function (x) { return !itemDone(x); })[0];
+    var total = items.reduce(function (s0, x) { return s0 + x.min; }, 0);
+    var list = items.map(function (it, i) {
+      var ok = itemDone(it), tx = itemText(it), cls = 'pi' + (ok ? ' done' : '') + (it === nxIt ? ' cur' : '');
+      var inner = '<span class="pn">' + (ok ? '✓' : i + 1) + '</span><span class="pt"><b>' + tx[0] + '</b><span>' + tx[1] + '</span></span><span class="pm">' + it.min + ' мин</span>';
+      return '<li><a class="' + cls + '" href="' + itemHref(it) + '">' + inner + '</a></li>';
+    }).join('');
+    var head = '<div class="lab">План на сегодня · ' + DOW[wd(pl.date)] + (pl.kind === 'long' ? ' · длинный день' : '') + '</div>' +
+      '<div class="plan-top"><h2 class="plan-h">' + (nxIt ? 'Сделано ' + done.length + ' из ' + items.length : 'План выполнен ✓') + '</h2><span class="pm">≈ ' + total + ' мин</span></div>' +
+      '<div class="bar goldbar"><i style="width:' + (items.length ? Math.round(done.length / items.length * 100) : 100) + '%"></i></div>';
+    var act = nxIt
+      ? '<div class="actions"><a class="btn" href="' + itemHref(nxIt) + '">' + (done.length ? 'Продолжить' : 'Начать') + ' →</a></div>'
+      : '<p style="margin:12px 0 0">' + (items.length ? 'Отличная работа! На сегодня всё. Если хочется ещё — добавь задачи.' : 'Сегодня новых задач на твоём уровне нет.') + '</p><div class="actions"><button class="btn ghost" type="button" data-act="plan-more">Ещё задачи</button></div>';
+    return '<section class="panel planp" data-plan="day">' + head + '<ol class="plan">' + list + '</ol>' + act + '</section>';
+  }
+  function vHowto() {
+    if (S.howto) return '';
+    return '<section class="panel howto"><div class="lab">Как заниматься</div><ol class="steps">' +
+      '<li><b>Каждый день открывай «Сегодня».</b> Здесь готовый план на день под твою цель — ' + (WEEK_OPTS.indexOf(S.weekGoal) >= 0 ? S.weekGoal : 10) + ' часов в неделю.</li>' +
+      '<li><b>Жми «Начать» и иди по пунктам сверху вниз.</b> После каждого шага появляется кнопка «Дальше по плану».</li>' +
+      '<li><b>Тему и задачи выбирает программа</b> — по маршруту олимпиады и по твоему рейтингу. Если уровень темы тебе лёгок, она предложит сдать его зачётом.</li>' +
+      '<li><b>Решай на бумаге, ответ вводи сюда.</b> Не получается — открой подсказку: лучше с подсказкой, чем наугад. Ошибки вернутся на повторение.</li>' +
+      '<li><b>Один день в неделю — выходной</b> (по умолчанию воскресенье), накануне план длиннее: задача недели и смешанная тренировка. Выходной меняется в профиле.</li></ol>' +
+      '<div class="actions"><button class="btn small" type="button" data-act="howto-ok">Понятно</button></div></section>';
+  }
+  function vRoute() {
+    var r = routeList(), fr = frontier();
+    var items = r.map(function (id, i) {
+      var t = T[id], open = id === fr || topicOpen(t), started = t.problems.some(function (p) { return S.att[p.id]; }) || t.lessons.some(function (l) { return S.read[l.id]; });
+      var st = id === fr ? 'сейчас' : !open ? 'пройдена на твоём уровне' : started ? 'начата' : 'впереди';
+      return '<li><a class="ri' + (id === fr ? ' cur' : '') + (!open ? ' done' : '') + '" href="#t-' + id + '"><span class="rn">' + (!open ? '✓' : i + 1) + '</span><span class="rt">' + t.title + '</span><span class="rs">' + st + '</span></a></li>';
+    }).join('');
+    return '<section class="panel"><div class="lab">Маршрут</div><p class="small" style="margin:6px 0 0">Темы идут в порядке программы олимпиады, и план ведёт по ним сам. Когда рейтинг вырастет, в пройденных темах откроются задачи следующего уровня — план вернёт тебя к ним.</p><ol class="route">' + items + '</ol>' +
+      '<div class="actions"><a class="btn ghost small" href="#mix">Смешанная тренировка</a><a class="btn ghost small" href="#map">Все темы</a></div></section>';
+  }
   // решение показываем, когда загружен файл темы (на сайте темы подгружаются по мере надобности)
   function solText(p) {
     var t = T[p.topic];
@@ -693,7 +918,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
         '<span class="fb-sub">Тема: <a href="#t-' + p.topic + '">' + T[p.topic].title + '</a> · ' + LV[p.lvl][0] + '</span>' + goalPill() + '</div>';
       if (!ok) h += '<p style="margin:12px 0 0">' + (given ? '<b>Твой ответ:</b> ' + given + '<br>' : '') + '<b>Верный ответ:</b> ' + right + '</p>';
       h += '<section class="sol"><div class="lab">Решение</div><div class="sol-t">' + solText(p) + '</div></section>';
-      return h + '<div class="actions"><button class="btn" type="button" data-act="mnext">' + (run.i + 1 < n ? 'Дальше →' : 'Итоги →') + '</button></div>';
+      return h + '<div class="actions"><button class="btn" type="button" data-act="mnext">' + (run.i + 1 < n ? 'Дальше →' : 'Итоги тренировки →') + '</button></div>';
     }
     var res = S.mres, st = mixState();
     var start = st.ok ? '<button class="btn" type="button" data-act="mstart">' + (res ? 'Ещё тренировка' : 'Начать') + '</button>' : '';
@@ -714,6 +939,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
         '<p style="margin:0">Рейтинг за тренировку: <b>' + sign(dsum) + '</b>. Ошибки вернутся на повторение через день.' + (st.ok ? '' : ' ' + st.why) + '</p></section>' +
         '<section class="sec-res">' + rows + '</section>' +
         '<div class="actions">' + start + '<a class="btn ghost" href="#today">На главную</a></div>' +
+        (S.plan && S.plan.items && S.plan.items.some(function (x) { return x.k === 'mix'; }) ? planBar() : '') +
         '<section class="msec"><h2>Задачи и решения</h2><ul class="reslist">' + list + '</ul></section>';
     }
     return head + '</div><section class="panel" style="max-width:720px"><ul class="steps">' +
@@ -896,11 +1122,6 @@ window.MM = { topics: [], diag: null, roadmap: [],
     var r = S.rating;
     if (r == null) return vWelcome();
     var d7 = delta7(), nx = stageNext(r);
-    var dId = dailyId(), wId = weeklyId();
-    var dp = P[dId], wp = P[wId];
-    var dDone = S.daily[today()] && S.daily[today()].done, wDone = S.weekly[weekKey()] && S.weekly[weekKey()].done;
-    var due = dueList();
-    var t = T[S.lastTopic] || MM.topics[0], ns = nextStep(t);
     var backup = S.n >= 10 && (!S.lastExport || Date.now() - S.lastExport > 14 * 86400000)
       ? '<section class="panel" style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between"><div><div class="lab">Резервная копия</div><p style="margin:4px 0 0">Прогресс хранится только в этом браузере. Раз в две недели сохраняй код прогресса — например, отправь его себе в сообщения.</p></div><a class="btn ghost small" href="#me">Сохранить код</a></section>'
       : '';
@@ -921,19 +1142,11 @@ window.MM = { topics: [], diag: null, roadmap: [],
       banners += '<section class="flash"><div><div class="lab">Цель достигнута</div><div class="flash-t">' + fs.name + ' · ' + fs.r + '</div><p class="flash-p">' + (goal ? 'Следующая цель — «' + goal.s.name + '», ' + goal.s.r + '.' : 'Ты прошёл всю шкалу.') + '</p></div><button class="btn small" type="button" data-act="flash-ok">Дальше</button></section>';
     }
 
-    var hero = banners + '<section class="hero"><div class="hero-main"><div class="lab">Рейтинг</div>' +
+    var heroOnly = '<section class="hero"><div class="hero-main"><div class="lab">Рейтинг</div>' +
       '<div class="rating-big">' + r + '</div>' +
       '<div class="hero-sub"><span class="delta ' + deltaCls(d7) + '">' + sign(d7) + '</span> за 7 дней · пик ' + S.peak + ' · ' + S.n + ' ' + plural(S.n, 'задача', 'задачи', 'задач') + ' в рейтинге</div>' +
       goalHtml + '</div>' +
       '<div class="chart" data-chart="small"></div></section>';
-
-    var cards = '<section class="grid4">' +
-      probCard('Задача дня', dp, dDone ? '<span class="pill good">решена ✓</span>' : '', !dDone) +
-      probCard('Задача недели', wp, wDone ? '<span class="pill good">сдана ✓</span>' : '<span class="pill gold">доказательство</span>', false) +
-      (due.length ? '<a class="card" href="#p-' + due[0] + '"><div class="lab">Повторение</div><div class="card-title">' + due.length + ' ' + plural(due.length, 'задача ждёт', 'задачи ждут', 'задач ждут') + ' повторения</div><div class="card-q">Задачи, где были ошибки, возвращаются через 1, 3 и 7 дней. Так решение запоминается надолго.</div><div class="card-meta"><span class="pill bad">сегодня</span></div></a>'
-        : '<div class="card"><div class="lab">Повторение</div><div class="card-title">На сегодня всё повторено</div><div class="card-q">Задачи с ошибками вернутся сюда через 1, 3 и 7 дней.</div></div>') +
-      '<a class="card" href="' + ns.href + '"><div class="lab">Продолжить</div><div class="card-title">' + t.title + '</div><div class="card-q">' + esc(ns.label) + '</div><div class="card-meta"><span>' + Math.round(mastery(t.problems) * 100) + '% темы</span></div></a>' +
-      '</section>';
 
     var week = '<section class="panel"><div class="lab">Эта неделя</div>' +
       '<div class="stat-row" style="margin-top:10px"><span>Время на математику</span><b>' + mins(ws) + '</b></div>' +
@@ -942,17 +1155,14 @@ window.MM = { topics: [], diag: null, roadmap: [],
       '<div class="stat-row"><span>Дней подряд</span><b>' + st + '</b></div>' +
       '<div class="stat-row"><span>Решено сегодня</span><b>' + (S.days[today()] || 0) + '</b></div></section>';
 
-    var ms = mixState(), mr = S.mrun;
-    var mix = '<section class="panel mixp"><div><div class="lab">Смешанная тренировка</div><p style="margin:4px 0 0">' +
-      (mr ? 'Тренировка не закончена: задача ' + (mr.i + 1) + ' из ' + mr.ids.length + '.' : ms.ok ? M_N + ' задач из начатых тем вперемешку, без подписи темы — как на олимпиаде.' : ms.why) + '</p></div>' +
-      (mr || ms.ok ? '<a class="btn small" href="#mix">' + (mr ? 'Продолжить' : 'Начать') + '</a>' : '') + '</section>';
-    return hero + ladder(r) + cards + mix + backup + '<div class="row2">' + week + countdown() + '</div>';
+    return banners + vPlan() + vHowto() + heroOnly + ladder(r) + backup + vRoute() + '<div class="row2">' + week + countdown() + '</div>';
   }
   function gradePill(it) { return it && it.grades ? '<span class="pill">' + (/^\d/.test(it.grades) ? it.grades + ' класс' : it.grades) + '</span>' : ''; }
   function topicRow(t, it) {
     var solved = solvedIn(t.problems);
     var cl = [1, 2, 3].filter(function (L) { return credited(t.id, L); });
-    return '<li><a class="mitem" href="#t-' + t.id + '"><span class="mt">' + t.title + '</span>' + gradePill(it) + (cl.length ? '<span class="pill good">зачёт: ' + (cl.length > 1 ? 'уровни ' : 'уровень ') + cl.join(', ') + '</span>' : '') + '<span class="mprog"><span class="bar"><i style="width:' + (solved / t.problems.length * 100) + '%"></i></span>' + solved + '/' + t.problems.length + '</span></a></li>';
+    var now = S.rating != null && frontier() === t.id ? '<span class="pill gold">сейчас по плану</span>' : '';
+    return '<li><a class="mitem" href="#t-' + t.id + '"><span class="mt">' + t.title + '</span>' + gradePill(it) + now + (cl.length ? '<span class="pill good">зачёт: ' + (cl.length > 1 ? 'уровни ' : 'уровень ') + cl.join(', ') + '</span>' : '') + '<span class="mprog"><span class="bar"><i style="width:' + (solved / t.problems.length * 100) + '%"></i></span>' + solved + '/' + t.problems.length + '</span></a></li>';
   }
   function vMap() {
     var all = 0, ready = 0;
@@ -1021,7 +1231,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
       '<h1 class="pg" style="margin-top:6px">' + l.title + '</h1><p class="pg-sub">' + l.mins + ' минут чтения' + (l.deep ? ' · <span class="pill gold">глубокий уровень</span>' : '') + '</p></div>' +
       '<article class="lessonbody">' + body + '</article>' +
       '<div class="pnav">' + (prv ? '<a class="btn ghost" href="#l-' + prv.id + '">← ' + prv.title + '</a>' : '<span></span>') +
-      '<button class="btn" type="button" data-act="read" data-id="' + l.id + '">' + (nxt ? 'Понятно, дальше →' : 'Понятно, к задачам →') + '</button></div>';
+      (inPlan(l.id) ? '<button class="btn" type="button" data-act="read" data-plan="1" data-id="' + l.id + '">Понятно — дальше по плану →</button>' : '<button class="btn" type="button" data-act="read" data-id="' + l.id + '">' + (nxt ? 'Понятно, дальше →' : 'Понятно, к задачам →') + '</button>') + '</div>';
   }
   function vZachet(tid, L) {
     var t = T[tid]; if (!t || !zAvailable(t, L)) return notFound();
@@ -1056,6 +1266,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
         '<section class="panel" style="max-width:720px"><div class="lab">' + (res.pass ? 'Зачёт сдан ✓' : 'Зачёт не сдан') + '</div><div class="rating-big" style="font-size:56px;margin:6px 0">' + res.k + '<span class="of"> из </span>' + res.n + '</div>' +
         '<p style="margin:0">' + (res.pass ? 'Уровень ' + L + ' засчитан: программа больше не будет предлагать его задачи как следующий шаг. ' + next : 'Нужно ' + zPass(res.n) + ' из ' + res.n + '. Разбери ошибки ниже и попробуй ещё раз — задачи будут другими, пока они есть.') + '</p></section>' +
         '<div class="actions">' + (res.pass ? (next.indexOf('зачёт') >= 0 ? '<a class="btn" href="#z-' + t.id + '-' + (L + 1) + '">Зачёт по уровню ' + (L + 1) + '</a>' : '<a class="btn" href="#t-' + t.id + '">К теме</a>') + (next.indexOf('зачёт') >= 0 ? back : '') : start + 'Пройти ещё раз</button>' + back) + '</div>' +
+        (S.plan && S.plan.items && S.plan.items.some(function (x) { return x.k === 'zachet' && x.t === tid && x.L === L; }) ? planBar() : '') +
         '<section class="msec"><h2>Задачи и решения</h2><ul class="reslist">' + list + '</ul></section>';
     }
     var n0 = Math.min(Z_N, zTests(t, L).length), cr = S.credit[t.id] && S.credit[t.id][L];
@@ -1119,6 +1330,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
       h += '<div class="fb ' + (g.pts >= 4 ? 'ok' : 'no') + '" id="after" tabindex="-1"><span class="fb-t">' + g.pts + ' из 7</span>' + deltaChip(g.d) + '<span class="fb-sub">' + (g.pts === 7 ? 'Полное решение.' : g.pts >= 4 ? 'Хорошо, но не до конца. Задача вернётся на повторение.' : 'Задача вернётся на повторение через 3 дня. Разбери решение ещё раз.') + '</span>' + goalPill() + '</div>';
     }
 
+    if (inPlan(id) && S.att[id]) h += planBar();
     if (p.type !== 'proof' || cur.phase === 'solve') h += hintsBlock(p, ratedPending);
     if (p.type !== 'proof' && !cur.showSol && cur.phase !== 'done') {
       h += '<div class="actions"><button class="linkbtn" type="button" data-act="giveup">' + (S.att[id] ? 'Показать решение' : 'Сдаюсь — показать решение (задача засчитается как нерешённая)') + '</button></div>';
@@ -1234,6 +1446,9 @@ window.MM = { topics: [], diag: null, roadmap: [],
     }
     return '<section class="msec"><h2>Часы в неделю</h2><p class="small" style="margin:0">Чтобы до финала в апреле 2028 пройти всю программу вместе с глубоким уровнем, нужно около 10 часов в учебные недели и 15 часов в каникулы. Перед этапами олимпиады — 12–14 часов.</p>' +
       '<div class="actions" role="group" aria-label="Цель часов в неделю">' + btns + '</div>' +
+      '<p class="small" style="margin:14px 0 0">Выходной день — без плана. Накануне план длиннее: задача недели и смешанная тренировка.</p>' +
+      '<div class="actions" role="group" aria-label="Выходной день">' + [1, 2, 3, 4, 5, 6, 0].map(function (dd) { return '<button class="btn ghost small" type="button" data-act="restday" data-d="' + dd + '" aria-pressed="' + ((S.restDay == null ? 0 : S.restDay) === dd) + '">' + ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'][dd] + '</button>'; }).join('') + '</div>' +
+      '<div class="actions"><button class="linkbtn" type="button" data-act="howto-reset">Показать подсказку «Как заниматься»</button></div>' +
       '<ul class="weeks">' + rows + '</ul></section>';
   }
   function vMe() {
@@ -1493,6 +1708,11 @@ window.MM = { topics: [], diag: null, roadmap: [],
     if (act === 'opt') { var i = Number(b.getAttribute('data-i')); answerTest(cur.id, i === P[cur.id].a, i); }
     else if (act === 'hint') { cur.hints++; render(); }
     else if (act === 'reload-topic') { delete failed[b.getAttribute('data-id')]; render(); }
+    else if (act === 'plan-force') { S.plan = makePlan(true); save(); render(); }
+    else if (act === 'plan-more') { planMore(); render(); }
+    else if (act === 'howto-ok') { S.howto = true; save(); render(); }
+    else if (act === 'howto-reset') { S.howto = false; save(); go('#today'); }
+    else if (act === 'restday') { S.restDay = Number(b.getAttribute('data-d')); if (S.plan && S.plan.date === today() && S.plan.rest) S.plan = null; save(); render(); }
     else if (act === 'zstart') { zStart(b.getAttribute('data-t'), Number(b.getAttribute('data-l'))); render(); }
     else if (act === 'zopt') { var zi = Number(b.getAttribute('data-i')); zAnswer(zi, zi === P[S.zrun.ids[S.zrun.i]].a); }
     else if (act === 'zskip') zAnswer(null, false);
@@ -1514,6 +1734,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     else if (act === 'read') {
       var id = b.getAttribute('data-id'), f = findLesson(id);
       S.read[id] = true; save();
+      if (b.getAttribute('data-plan')) { go(planNext() || '#today'); return; }
       var nx = nextLesson(f);
       go(nx ? '#l-' + nx.id : '#t-' + f.t.id);
     }

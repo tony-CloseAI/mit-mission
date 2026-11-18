@@ -42,6 +42,7 @@ git -C app push
 - `ROADMAP.md` — план развития: все темы 1–11 класса и олимпиадные, порядок работы, что готово.
 - `tests/smoke.js` — проходит приложение как пользователь (нужен пакет `jsdom`).
 - `tests/smoke-goal.js` — проверяет ссылку переноса рейтинга и цели.
+- `tests/smoke-plan.js` — проходит план на день как ученик: «Начать», пункт за пунктом, «Дальше по плану»; выходной и длинный день.
 
 ## Ссылка переноса рейтинга
 
@@ -55,6 +56,7 @@ python app/build.py                      # собрать
 node app/tests/verify-content.js         # проверить ответы
 node app/tests/smoke.js app/docs/index.html        # проверить сайт (после npm i jsdom)
 node app/tests/smoke.js app/dist/mit-mission.html   # проверить предпросмотр
+node app/tests/smoke-plan.js app/docs/index.html   # проверить план на день
 ```
 
 ## Как добавить тему
