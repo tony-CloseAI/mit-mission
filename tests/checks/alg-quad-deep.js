@@ -26,7 +26,24 @@ function allRoots(f, lo, hi, step = 0.000917) {
   }
   return out.sort((a, b) => a - b);
 }
-const quadRoots = (a, b, c) => { const R = 1 + Math.max(Math.abs(b), Math.abs(c)) / Math.abs(a); return allRoots(x => a * x * x + b * x + c, -R - 0.5, R + 0.5, (2 * R + 1) / 20011); };
+// корни ax² + bx + c без формулы корней: от вершины параболы делим отрезок пополам в обе стороны
+// (по одну сторону от вершины трёхчлен монотонен); касание оси — значение в вершине равно нулю
+function quadRoots(a, b, c) {
+  const f = x => a * x * x + b * x + c, v = -b / (2 * a), fv = f(v);
+  const R = 2 + 2 * Math.max(Math.abs(b), Math.abs(c)) / Math.abs(a); // все корни в [v − R; v + R]
+  if (Math.abs(fv) <= 1e-12 * Math.max(1, Math.abs(c), Math.abs(b * v))) return [v];
+  if (Math.sign(fv) === Math.sign(a)) return [];
+  const bis = (lo, hi) => {
+    let flo = f(lo);
+    for (let i = 0; i < 200; i++) {
+      const m = (lo + hi) / 2; if (m === lo || m === hi) break;
+      const fm = f(m); if (fm === 0) return m;
+      if (Math.sign(fm) === Math.sign(flo)) { lo = m; flo = fm; } else hi = m;
+    }
+    return (lo + hi) / 2;
+  };
+  return [bis(v - R, v), bis(v, v + R)];
+}
 function minimize(f, lo, hi, n = 20000) {
   let bx = lo, bv = Infinity;
   for (let i = 0; i <= n; i++) { const x = lo + (hi - lo) * i / n, v = f(x); if (v < bv) { bv = v; bx = x; } }

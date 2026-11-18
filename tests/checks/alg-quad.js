@@ -20,14 +20,23 @@ function realRoots(f, lo, hi, step = 0.000731) {
   }
   return out.sort((a, b) => a - b);
 }
-// корни многочлена ax² + bx + c с учётом касания: ищем ещё и минимумы |f|, равные нулю
+// корни ax² + bx + c без формулы корней: от вершины параболы делим отрезок пополам в обе стороны
+// (по одну сторону от вершины трёхчлен монотонен); касание оси — значение в вершине равно нулю
 function quadRoots(a, b, c) {
-  const f = x => a * x * x + b * x + c;
-  const R = 1 + Math.max(Math.abs(b), Math.abs(c)) / Math.abs(a); // все корни лежат в [−R; R]
-  const r = realRoots(f, -R - 0.5, R + 0.5, (2 * R + 1) / 20011);
-  const v = -b / (2 * a);
-  if (Math.abs(f(v)) < 1e-12 && !r.some(x => Math.abs(x - v) < 1e-6)) r.push(v);
-  return r.sort((x, y) => x - y);
+  const f = x => a * x * x + b * x + c, v = -b / (2 * a), fv = f(v);
+  const R = 2 + 2 * Math.max(Math.abs(b), Math.abs(c)) / Math.abs(a); // все корни в [v − R; v + R]
+  if (Math.abs(fv) <= 1e-12 * Math.max(1, Math.abs(c), Math.abs(b * v))) return [v];
+  if (Math.sign(fv) === Math.sign(a)) return [];
+  const bis = (lo, hi) => {
+    let flo = f(lo);
+    for (let i = 0; i < 200; i++) {
+      const m = (lo + hi) / 2; if (m === lo || m === hi) break;
+      const fm = f(m); if (fm === 0) return m;
+      if (Math.sign(fm) === Math.sign(flo)) { lo = m; flo = fm; } else hi = m;
+    }
+    return (lo + hi) / 2;
+  };
+  return [bis(v - R, v), bis(v, v + R)];
 }
 // число → несократимая дробь строкой ('7/3', '-5/3', '4')
 function toFrac(x, maxDen = 2000) {
