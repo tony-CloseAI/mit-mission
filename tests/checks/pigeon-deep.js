@@ -71,9 +71,11 @@ module.exports = {
     // IMO 1985: моделируем 1985 чисел с простыми делителями ≤ 23 и находим четыре с произведением — четвёртой степенью
     'pg-55': () => { const rnd = rng(55);
       for (let t = 0; t < 20; t++) { const seen = new Set(), M = []; while (M.length < 1985) { const e = Array.from({ length: 9 }, () => Math.floor(rnd() * 6)); const k = e.join(); if (!seen.has(k)) { seen.add(k); M.push(e); } }
-        const par = e => e.map(x => x % 2).join(), pairs = []; let pool = M.slice();
-        while (pool.length >= 513) { const by = new Map(); let done = false; for (let i = 0; i < pool.length && !done; i++) { const k = par(pool[i]); if (by.has(k)) { const j = by.get(k); pairs.push(pool[i].map((x, q) => (x + pool[j][q]) / 2)); pool = pool.filter((_, z) => z !== i && z !== j); done = true; } else by.set(k, i); } if (!done) return false; }
-        if (pairs.length < 513) return false; const by = new Map(); let ok = false; for (const c of pairs) { const k = par(c); if (by.has(k)) { const d = by.get(k); if (c.every((x, q) => (2 * x + 2 * d[q]) % 4 === 0)) { ok = true; break; } } else by.set(k, c); }
+        // корзины по набору чётностей: из каждой корзины берём числа парами (это и есть жадный выбор пар из решения)
+        const par = e => e.map(x => x % 2).join(), buckets = new Map(); M.forEach(e => { const k = par(e); if (!buckets.has(k)) buckets.set(k, []); buckets.get(k).push(e); });
+        const pairs = []; for (const b of buckets.values()) for (let i = 0; i + 1 < b.length; i += 2) pairs.push(b[i].map((x, q) => (x + b[i + 1][q]) / 2));
+        if (buckets.size > 512 || pairs.length < 737) return false;
+        const by = new Map(); let ok = false; for (const c of pairs) { const k = par(c); if (by.has(k)) { const d = by.get(k); if (c.every((x, q) => (2 * x + 2 * d[q]) % 4 === 0)) { ok = true; break; } } else by.set(k, c); }
         if (!ok) return false; }
       return 1985 - 2 * 736 === 513 && 737 > 512; }
   },
