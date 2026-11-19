@@ -50,16 +50,17 @@ function open(hash, storage) {
   const planEl = $('[data-plan="day"]'), hero = $('.hero');
   expect('today starts with the daily plan', !!planEl && !!hero && (planEl.compareDocumentPosition(hero) & w.Node.DOCUMENT_POSITION_FOLLOWING));
   const st0 = S().plan;
-  expect('plan for today has daily problem, lessons and practice of the first route topic', st0 && st0.items.some(x => x.k === 'daily') && st0.items.some(x => x.k === 'lesson' && x.t === 'div') && st0.items.length >= 3);
+  expect('plan for today has daily problem, lessons and practice of the first route topic', st0 && st0.items.some(x => x.k === 'daily') && st0.items.some(x => x.k === 'lesson' && x.t === 'b-arith') && st0.items.length >= 3);
   const total = st0.items.reduce((s, x) => s + x.min, 0);
   expect('plan fits the 10 h/week budget (75 min on a normal day, 3 h 45 on the long day)', st0.kind === 'long' ? total <= 225 : st0.kind === 'normal' ? total <= 75 : true);
   expect('start button opens the first item', $('[data-plan="day"] .actions a.btn').getAttribute('href') === $('.plan .pi').getAttribute('href'));
   expect('howto shown on first visit', !!$('.howto'));
   click('[data-act="howto-ok"]'); await sleep(20);
   expect('howto dismissed and remembered', !$('.howto') && S().howto === true);
-  expect('route panel marks the first topic as current', [...d.querySelectorAll('.route .ri.cur')].length === 1 && $('.route .ri.cur').textContent.includes('Делимость'));
+  expect('route panel marks the first topic as current', [...d.querySelectorAll('.route .ri.cur')].length === 1 && $('.route .ri.cur').textContent.includes('Натуральные числа'));
+  expect('route starts with the school base, then olympiad topics', (() => { const r = [...d.querySelectorAll('.route .ri')].map(x => x.textContent); const iB = r.findIndex(x => x.includes('Наглядная геометрия') || x.includes('Отношения')), iD = r.findIndex(x => x.includes('Делимость')); return r.length >= 14 && iB >= 0 && iD > iB; })());
   const dTopic = findP(st0.items.find(x => x.k === 'daily').id).topic;
-  expect('daily problem comes from a reached topic', dTopic === 'div');
+  expect('daily problem comes from a reached topic', dTopic === 'b-arith');
 
   // 2. проходим план по кнопкам
   let steps = 0, okFlow = true, sawLesson = false, sawProblem = false, sawZachet = false;
@@ -110,6 +111,15 @@ function open(hash, storage) {
   click('[data-act="plan-more"]'); await sleep(20);
   expect('«Ещё задачи» adds items', S().plan.items.length > before && !!$('[data-plan="day"] .actions a.btn'));
   expect('map marks the current topic', (await (async () => { await nav('#map'); return [...d.querySelectorAll('.mitem .pill.gold')].some(x => x.textContent === 'сейчас по плану'); })()));
+
+  // 2б. школьная тема, уровни 1–3 которой сданы зачётом, пропускается и не заставляет читать уроки
+  {
+    const s2 = JSON.parse(w.localStorage.getItem('mit-mission-v1'));
+    s2.read = {}; s2.att = {}; s2.credit = { 'b-arith': { 1: { ts: 1 }, 2: { ts: 1 }, 3: { ts: 1 } } }; s2.plan = null; s2.restDay = (new Date().getDay() + 3) % 7;
+    const w2 = open('#today', JSON.stringify(s2)); await sleep(80);
+    const p2 = JSON.parse(w2.localStorage.getItem('mit-mission-v1')).plan;
+    expect('credited base topic is skipped: no lessons from it, plan moves to the next topic', p2 && !p2.items.some(x => x.t === 'b-arith') && p2.items.some(x => x.t === 'b-frac'));
+  }
 
   // 3. выходной сегодня: панель отдыха и «Всё равно позаниматься»
   const wdToday = new Date().getDay();

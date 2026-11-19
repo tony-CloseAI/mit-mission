@@ -684,10 +684,11 @@ window.MM = { topics: [], diag: null, roadmap: [],
   }
 
   // ---------- маршрут и план на день ----------
-  // Ученик не выбирает сам: темы идут в порядке программы олимпиады, задачи — по рейтингу.
+  // Ученик не выбирает сам: сначала школьная база 1–7 класса, потом темы олимпиады, задачи — по рейтингу.
   // Тема «пройдена на твоём уровне», когда в ней не осталось нерешавшихся задач не сложнее рейтинга + 250,
   // прочитаны нужные уроки и нечего сдавать зачётом. Вырос рейтинг — тема снова открывается.
-  var ROUTE_CORE = ['div', 'alg-expr', 'proof', 'tri', 'alg-quad', 'count', 'cong', 'circ', 'pigeon', 'poly', 'ineq', 'area', 'seq', 'dioph'];
+  var ROUTE_CORE = ['b-arith', 'b-frac', 'b-dec', 'b-neg', 'b-ratio', 'b-word', 'b-geo', 'alg-lin',
+    'div', 'alg-expr', 'proof', 'tri', 'alg-quad', 'count', 'cong', 'circ', 'pigeon', 'poly', 'ineq', 'area', 'seq', 'dioph'];
   var WIN = 250;
   function routeList() {
     var r = ROUTE_CORE.filter(function (id) { return T[id]; });
@@ -713,13 +714,19 @@ window.MM = { topics: [], diag: null, roadmap: [],
     }
     return 0;
   }
+  // школьная тема 1–6 класса, в которой он уже доказал уровни 1–3 (зачётом или решениями): основные уроки не обязательны
+  function baseKnown(t) {
+    return t.sec === 'base' && [1, 2, 3].every(function (L) {
+      return credited(t.id, L) || mastery(t.problems.filter(function (p) { return p.lvl === L; })) >= 0.7;
+    });
+  }
   // уроки, которые нужно прочитать перед задачами: два первых сразу, все основные — до полуфинала, глубокие — перед ◆
   function lessonsNeeded(t, picks, skip) {
     var base = t.lessons.filter(function (l) { return !l.deep; }), unread = base.filter(function (l) { return !S.read[l.id] && (!skip || skip.indexOf(l.id) < 0); });
-    var read = base.length - unread.length, p = picks[0], out = [];
-    if (unread.length && (read < 2 || !p || p.lvl >= 3)) out = unread.slice();
+    var read = base.length - unread.length, p = picks[0], out = [], known = baseKnown(t);
+    if (unread.length && !known && (read < 2 || !p || p.lvl >= 3)) out = unread.slice();
     else if (p && p.deep) out = t.lessons.filter(function (l) { return l.deep && !S.read[l.id] && (!skip || skip.indexOf(l.id) < 0); });
-    return { list: out, read: read, base: base.length };
+    return { list: out, read: read, base: base.length, known: known };
   }
   function topicOpen(t) { var pk = topicPicks(t); return pk.length > 0 || lessonsNeeded(t, pk).list.length > 0 || zachetOffer(t) > 0; }
   function frontier() { var r = routeList(); for (var i = 0; i < r.length; i++) if (topicOpen(T[r[i]])) return r[i]; return null; }
@@ -742,7 +749,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     var t = T[tid], out = [], used = 0;
     var zl = zachetOffer(t);
     if (zl && taken.indexOf('z:' + tid) < 0) { out.push({ k: 'zachet', t: tid, L: zl, min: 20 }); used += 20; taken.push('z:' + tid); }
-    var picks = topicPicks(t, taken), need = lessonsNeeded(t, picks, taken), first = Math.min(2, need.base);
+    var picks = topicPicks(t, taken), need = lessonsNeeded(t, picks, taken), first = need.known ? 0 : Math.min(2, need.base);
     // в обычный день — до двух первых уроков, в длинный день можно прочитать больше
     var want = need.read < first ? Math.max(first - need.read, maxLessons > 2 ? maxLessons : 0) : need.list.length;
     need.list.slice(0, Math.min(want, maxLessons)).forEach(function (l) {
@@ -750,7 +757,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     });
     var has = function (l) { return S.read[l.id] || taken.indexOf(l.id) >= 0; };
     var base = t.lessons.filter(function (l) { return !l.deep; }), deep = t.lessons.filter(function (l) { return l.deep; });
-    var nBase = base.filter(has).length, allBase = nBase === base.length, allDeep = deep.every(has);
+    var nBase = base.filter(has).length, allBase = need.known || nBase === base.length, allDeep = deep.every(has);
     // задачи уровня, который сегодня сдаётся зачётом, не дублируем; не больше 8 задач темы за день
     var allowed = picks.filter(function (q) { return nBase >= first && (q.lvl < 3 || allBase) && (!q.deep || allDeep) && q.lvl !== zl; });
     var ids = [], m = 0;
@@ -867,7 +874,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
     return '<section class="panel howto"><div class="lab">Как заниматься</div><ol class="steps">' +
       '<li><b>Каждый день открывай «Сегодня».</b> Здесь готовый план на день под твою цель — ' + (WEEK_OPTS.indexOf(S.weekGoal) >= 0 ? S.weekGoal : 10) + ' часов в неделю.</li>' +
       '<li><b>Жми «Начать» и иди по пунктам сверху вниз.</b> После каждого шага появляется кнопка «Дальше по плану».</li>' +
-      '<li><b>Тему и задачи выбирает программа</b> — по маршруту олимпиады и по твоему рейтингу. Если уровень темы тебе лёгок, она предложит сдать его зачётом.</li>' +
+      '<li><b>Тему и задачи выбирает программа</b> — сначала школьная база с нуля, потом темы олимпиады; задачи — по твоему рейтингу. Если уровень темы тебе лёгок, она предложит сдать его зачётом.</li>' +
       '<li><b>Решай на бумаге, ответ вводи сюда.</b> Не получается — открой подсказку: лучше с подсказкой, чем наугад. Ошибки вернутся на повторение.</li>' +
       '<li><b>Один день в неделю — выходной</b> (по умолчанию воскресенье), накануне план длиннее: задача недели и смешанная тренировка. Выходной меняется в профиле.</li></ol>' +
       '<div class="actions"><button class="btn small" type="button" data-act="howto-ok">Понятно</button></div></section>';
@@ -879,7 +886,7 @@ window.MM = { topics: [], diag: null, roadmap: [],
       var st = id === fr ? 'сейчас' : !open ? 'пройдена на твоём уровне' : started ? 'начата' : 'впереди';
       return '<li><a class="ri' + (id === fr ? ' cur' : '') + (!open ? ' done' : '') + '" href="#t-' + id + '"><span class="rn">' + (!open ? '✓' : i + 1) + '</span><span class="rt">' + t.title + '</span><span class="rs">' + st + '</span></a></li>';
     }).join('');
-    return '<section class="panel"><div class="lab">Маршрут</div><p class="small" style="margin:6px 0 0">Темы идут в порядке программы олимпиады, и план ведёт по ним сам. Когда рейтинг вырастет, в пройденных темах откроются задачи следующего уровня — план вернёт тебя к ним.</p><ol class="route">' + items + '</ol>' +
+    return '<section class="panel"><div class="lab">Маршрут</div><p class="small" style="margin:6px 0 0">Сначала школьная база 1–7 класса, потом темы олимпиады в порядке её программы. План ведёт по ним сам. Когда рейтинг вырастет, в пройденных темах откроются задачи следующего уровня — план вернёт тебя к ним.</p><ol class="route">' + items + '</ol>' +
       '<div class="actions"><a class="btn ghost small" href="#mix">Смешанная тренировка</a><a class="btn ghost small" href="#map">Все темы</a></div></section>';
   }
   // решение показываем, когда загружен файл темы (на сайте темы подгружаются по мере надобности)

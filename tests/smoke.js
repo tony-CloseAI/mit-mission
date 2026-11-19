@@ -329,7 +329,7 @@ function expect(name, cond) { checks.push([name, !!cond]); }
 
   // second topic: two-storey fractions render and answers work
   await nav('#map');
-  expect('map shows ready count', text().includes('Готово 7 из 45'));
+  expect('map shows ready count', text().includes('Готово 14 из 45'));
   expect('map shows grade pills', text().includes('7 класс'));
   await nav('#t-alg-expr');
   expect('alg-expr 55 problem chips, 15 deep', d.querySelectorAll('.pchip').length === 55 && d.querySelectorAll('.pchip .dp').length === 15);

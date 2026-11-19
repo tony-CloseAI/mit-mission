@@ -67,7 +67,7 @@ function open(url, storage) {
     if (S().rating >= 1350) break;
     w.location.hash = '#p-' + id; await sleep(30);
     for (let i = 0; i < 300 && d.querySelector('[data-loading]'); i++) await sleep(10);
-    const p = w.MM.topics[0].problems.find(x => x.id === id);
+    const p = w.MM.topics.flatMap(t => t.problems).find(x => x.id === id);
     d.getElementById('ans').value = p.a[0];
     d.querySelector('[data-form="ans"]').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
     await sleep(10);
