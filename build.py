@@ -16,7 +16,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-CONTENT_FILES = ["roadmap.js", "_fig.js", "diagnostic.js", "b-arith.js", "b-frac.js", "b-dec.js", "b-neg.js", "b-ratio.js", "b-word.js", "b-geo.js", "alg-lin.js", "alg-lin-deep.js", "divisibility.js", "div-deep.js", "alg-expr.js", "alg-expr-deep.js", "proof.js", "proof-deep.js", "tri.js", "tri-deep.js", "alg-quad.js", "alg-quad-deep.js", "count.js", "count-deep.js", "cong.js", "cong-deep.js", "circ.js", "circ-deep.js"]
+CONTENT_FILES = ["roadmap.js", "_fig.js", "diagnostic.js", "b-arith.js", "b-frac.js", "b-dec.js", "b-neg.js", "b-ratio.js", "b-word.js", "b-geo.js", "alg-lin.js", "alg-lin-deep.js", "divisibility.js", "div-deep.js", "alg-expr.js", "alg-expr-deep.js", "proof.js", "proof-deep.js", "tri.js", "tri-deep.js", "alg-quad.js", "alg-quad-deep.js", "count.js", "count-deep.js", "cong.js", "cong-deep.js", "circ.js", "circ-deep.js", "pigeon.js", "pigeon-deep.js"]
 CORE_FILES = ["roadmap.js", "_fig.js", "diagnostic.js"]  # всегда в странице; остальные файлы — темы
 KEEP_OLD = 2  # сколько прежних версий файла темы оставлять в docs/t
 MARK = "<!--@CONTENT@-->"
